@@ -29,33 +29,45 @@
         private void InitializeComponent()
         {
             dataGridView1 = new DataGridView();
+            textBox1 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(41, 48);
+            dataGridView1.Location = new Point(41, 238);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 82;
-            dataGridView1.Size = new Size(1244, 612);
+            dataGridView1.Size = new Size(1202, 422);
             dataGridView1.TabIndex = 0;
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(257, 65);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(374, 39);
+            textBox1.TabIndex = 1;
+            textBox1.Text = "a";
             // 
             // Form_BookManager
             // 
             AutoScaleDimensions = new SizeF(13F, 32F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1318, 683);
+            Controls.Add(textBox1);
             Controls.Add(dataGridView1);
             Name = "Form_BookManager";
             Text = "BookManager";
             Load += Form_BookManager_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private DataGridView dataGridView1;
+        private TextBox textBox1;
     }
 }

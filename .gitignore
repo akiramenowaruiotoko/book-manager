@@ -2,4 +2,4 @@
 .vs
 book-manager/bin
 book-manager/obj
-
+book-manager/App.config
