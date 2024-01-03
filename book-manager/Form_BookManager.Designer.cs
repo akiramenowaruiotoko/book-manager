@@ -28,39 +28,42 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form_BookManager));
             dataGridView1 = new DataGridView();
-            textBox1 = new TextBox();
+            label1 = new Label();
+            dataGridView2 = new DataGridView();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             SuspendLayout();
             // 
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(41, 238);
+            resources.ApplyResources(dataGridView1, "dataGridView1");
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.RowHeadersWidth = 82;
-            dataGridView1.Size = new Size(1202, 422);
-            dataGridView1.TabIndex = 0;
             // 
-            // textBox1
+            // label1
             // 
-            textBox1.Location = new Point(257, 65);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(374, 39);
-            textBox1.TabIndex = 1;
-            textBox1.Text = "a";
+            resources.ApplyResources(label1, "label1");
+            label1.Name = "label1";
+            // 
+            // dataGridView2
+            // 
+            dataGridView2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            resources.ApplyResources(dataGridView2, "dataGridView2");
+            dataGridView2.Name = "dataGridView2";
             // 
             // Form_BookManager
             // 
-            AutoScaleDimensions = new SizeF(13F, 32F);
+            resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1318, 683);
-            Controls.Add(textBox1);
+            Controls.Add(dataGridView2);
+            Controls.Add(label1);
             Controls.Add(dataGridView1);
             Name = "Form_BookManager";
-            Text = "BookManager";
             Load += Form_BookManager_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -68,6 +71,7 @@
         #endregion
 
         private DataGridView dataGridView1;
-        private TextBox textBox1;
+        private Label label1;
+        private DataGridView dataGridView2;
     }
 }

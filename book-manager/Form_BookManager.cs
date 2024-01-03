@@ -1,54 +1,48 @@
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
-        /// <summary>
-        ///consol activation
-        /// </summary>
-        [System.Runtime.InteropServices.DllImport("kernel32.dll")] 
-        private static extern bool AllocConsole();
-
         public Form_BookManager()
         {
             // Form initialize
             InitializeComponent();
-            // consol execution
-            AllocConsole();
+            // Prevent users from adding new rows to dataGridView1
+            dataGridView1.AllowUserToAddRows = false;
+            // Hide the leftmost column of dataGridView1
+            dataGridView1.RowHeadersVisible = false;
         }
 
         /// <summary>
         /// db connect
         /// </summary>
-        public void DbConnect()
+        public void DbConnect(string queryText)
         {
             // get connectionstring from App.config file
             string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
 
             // connection instance generation
             using SqlConnection connection = new(connectionString);
+            using SqlCommand cmd = connection.CreateCommand();
             try
             {
                 // start connect DB
                 connection.Open();
 
-                /// <summary>
-                /// read DB
-                /// </summary>
-                // setting SQL query
-                string queryString = "SELECT book_name FROM basic_information where no = '05';";
-                // command instance generation
-                SqlCommand command = new(queryString, connection);
-                // read sql data and output
-                using (SqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        textBox1.Text = String.Format("{0}", reader[0]);
-                    }
-                }
+                // read DB and output dt
+                // DataTable create
+                DataTable dt = new();
+
+                // set table information in DataTable with SqlDataAdapter.Fill
+                cmd.CommandText = queryText;
+                SqlDataAdapter adapter = new(cmd);
+                adapter.Fill(dt);
+
+                // output dataGridView
+                dataGridView1.DataSource = dt;
             }
             catch (Exception exception)
             {
@@ -61,26 +55,11 @@ namespace book_manager
                 connection.Close();
             }
         }
-
-        // dataGridView practice
             private void Form_BookManager_Load(object sender, EventArgs e)
         {
+            string queryText = "SELECT * FROM basic_information;";
             // db接続確認
-            DbConnect();
-            // カラム数を指定
-            dataGridView1.ColumnCount = 4;
-
-            // カラム名を指定
-            dataGridView1.Columns[0].HeaderText = "教科";
-            dataGridView1.Columns[1].HeaderText = "点数";
-            dataGridView1.Columns[2].HeaderText = "氏名";
-            dataGridView1.Columns[3].HeaderText = "クラス名";
-
-            // データを追加
-            dataGridView1.Rows.Add("国語", 90, "田中　一郎", "A");
-            dataGridView1.Rows.Add("数学", 50, "鈴木　二郎", "A");
-            dataGridView1.Rows.Add("英語", 90, "佐藤　三郎", "B");
+            DbConnect(queryText);
         }
-
     }
 }
