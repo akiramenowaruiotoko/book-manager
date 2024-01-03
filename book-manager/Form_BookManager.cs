@@ -5,46 +5,60 @@ namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
-        [System.Runtime.InteropServices.DllImport("kernel32.dll")] // consol　有効化
-        private static extern bool AllocConsole();                 // consol　有効化
+        /// <summary>
+        ///consol activation
+        /// </summary>
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] 
+        private static extern bool AllocConsole();
 
         public Form_BookManager()
         {
+            // Form initialize
             InitializeComponent();
-            AllocConsole();                                        // consol　有効化
+            // consol execution
+            AllocConsole();
         }
-        // db connect
-        public void Connect1()
+
+        /// <summary>
+        /// db connect
+        /// </summary>
+        public void DbConnect()
         {
-            // 接続文字列の取得
-            var connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
+            // get connectionstring from App.config file
+            string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
 
-            using (var connection = new SqlConnection(connectionString))
-            using (var command = connection.CreateCommand())
+            // connection instance generation
+            using SqlConnection connection = new(connectionString);
+            try
             {
-                try
-                {
-                    // データベースの接続開始
-                    connection.Open();
+                // start connect DB
+                connection.Open();
 
-                    // SQLの実行
-                    
-                    command.CommandText = @"SELECT count(*) FROM basic_information";
-                    command.ExecuteNonQuery();
-                    textBox1.Text = "aaa";
-                    Console.WriteLine(textBox1.Text);
-                    Console.ReadKey();
-                }
-                catch (Exception exception)
+                /// <summary>
+                /// read DB
+                /// </summary>
+                // setting SQL query
+                string queryString = "SELECT book_name FROM basic_information where no = '05';";
+                // command instance generation
+                SqlCommand command = new(queryString, connection);
+                // read sql data and output
+                using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    Console.WriteLine(exception.Message);
-                    throw;
+                    while (reader.Read())
+                    {
+                        textBox1.Text = String.Format("{0}", reader[0]);
+                    }
                 }
-                finally
-                {
-                    // データベースの接続終了
-                    connection.Close();
-                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception.Message);
+                throw;
+            }
+            finally
+            {
+                // close db connection
+                connection.Close();
             }
         }
 
@@ -52,7 +66,7 @@ namespace book_manager
             private void Form_BookManager_Load(object sender, EventArgs e)
         {
             // db接続確認
-            Connect1();
+            DbConnect();
             // カラム数を指定
             dataGridView1.ColumnCount = 4;
 
