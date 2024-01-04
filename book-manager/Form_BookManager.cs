@@ -16,10 +16,16 @@ namespace book_manager
             dataGridView1.RowHeadersVisible = false;
         }
 
+        // read DataBase
+        private void Form_BookManager_Load(object sender, EventArgs e)
+        {
+            readDataBase();
+        }
+
         /// <summary>
-        /// db connect
+        /// read DataBase and output dt
         /// </summary>
-        public void DbConnect(string queryText)
+        public void readDataBase()
         {
             // get connectionstring from App.config file
             string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
@@ -37,7 +43,7 @@ namespace book_manager
                 DataTable dt = new();
 
                 // set table information in DataTable with SqlDataAdapter.Fill
-                cmd.CommandText = queryText;
+                cmd.CommandText = "SELECT * FROM basic_information;";
                 SqlDataAdapter adapter = new(cmd);
                 adapter.Fill(dt);
 
@@ -55,11 +61,11 @@ namespace book_manager
                 connection.Close();
             }
         }
-            private void Form_BookManager_Load(object sender, EventArgs e)
+
+        private void Botton_addBook_Click(object sender, EventArgs e)
         {
-            string queryText = "SELECT * FROM basic_information;";
-            // dbê⁄ë±ämîF
-            DbConnect(queryText);
+            Form_AddBook form_AddBook = new();
+            form_AddBook.Show();
         }
     }
 }
