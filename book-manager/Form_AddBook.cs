@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Data;
 
 namespace book_manager
 {
@@ -15,12 +7,15 @@ namespace book_manager
         public Form_AddBook()
         {
             InitializeComponent();
-            // Prevent users from adding new rows to dataGridView1
-            dataGridView1.AllowUserToAddRows = false;
-            // Hide the leftmost column of dataGridView1
-            dataGridView1.RowHeadersVisible = false;
         }
 
+        // read DB table basic_information only column
+        private void Form_AddBook_Load(object sender, EventArgs e)
+        {
+            DataTable addDataTable = OperateDataBase.ConnectDB("SELECT * FROM basic_information where 1 != '1';");
+            // output dataGridView
+            dataGridView1.DataSource = addDataTable;
+        }
         private void Button_Close_Click(object sender, EventArgs e)
         {
             this.Close();
