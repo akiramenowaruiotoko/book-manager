@@ -62,6 +62,7 @@
             Button_Add.TabIndex = 2;
             Button_Add.Text = "Add";
             Button_Add.UseVisualStyleBackColor = true;
+            Button_Add.Click += Button_Add_Click;
             // 
             // Button_Close
             // 
