@@ -25,8 +25,7 @@ namespace book_manager
         // show Form_AddBook
         private void Botton_addBook_Click(object sender, EventArgs e)
         {
-            Form_AddBook form_AddBook = new();
-            form_AddBook.Show();
         }
     }
 }
+
