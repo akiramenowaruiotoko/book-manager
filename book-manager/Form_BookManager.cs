@@ -33,6 +33,7 @@ namespace book_manager
             }
             catch (Exception ex)
             {
+                // エラーハンドリングの強化
                 MessageBox.Show("データの表示中にエラーが発生しました: " + ex.Message);
             }
         }
@@ -41,20 +42,26 @@ namespace book_manager
         {
             try
             {
-                DataTable modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
+                var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
 
                 if (modifiedData != null)
                 {
                     foreach (DataRow row in modifiedData.Rows)
                     {
-                        // データが挿入されるか、更新されるかの判定
-                        databaseManager.SaveRowToTable(row, "basic_information");
+                        string updateQuery = databaseManager.GenerateUpdateQuery(row, "basic_information");
+
+                        if (updateQuery != null)
+                        {
+                            if (databaseManager.SaveRowToTable(row, updateQuery))
+                            {
+                                // 更新が成功した場合、成功メッセージを表示
+                                MessageBox.Show("変更がデータベースに保存されました。");
+                            }
+                        }
                     }
 
                     // データソースに変更があったことを通知し、DataGridViewを更新
                     ((DataTable)dataGridView1.DataSource).AcceptChanges();
-
-                    MessageBox.Show("変更がデータベースに保存されました。");
                 }
                 else
                 {
@@ -63,32 +70,9 @@ namespace book_manager
             }
             catch (Exception ex)
             {
+                // エラーハンドリングの強化
                 MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
             }
-        }
-
-        // 他のメソッドやクラスの実装
-
-        // カラムの型に応じてデフォルトの値を取得するメソッド
-        private object GetDefaultValueForColumnType(DataGridViewColumn column)
-        {
-            Type columnType = column.ValueType;
-
-            if (columnType == typeof(int))
-            {
-                return 0;
-            }
-            else if (columnType == typeof(string))
-            {
-                return string.Empty;
-            }
-            else if (columnType == typeof(DateTime))
-            {
-                return DateTime.Now;
-            }
-            // 他の型に対する処理も追加可能
-
-            return DBNull.Value;
         }
     }
 
@@ -108,7 +92,7 @@ namespace book_manager
                 connection.Open();
 
                 // ROW_NUMBER() を使用したクエリ
-                string query = $"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) no, * FROM {tableName}";
+                string query = $"SELECT * FROM {tableName}";
 
                 using (SqlDataAdapter adapter = new SqlDataAdapter(query, connection))
                 {
@@ -120,49 +104,7 @@ namespace book_manager
             }
         }
 
-        public void SaveRowToTable(DataRow row, string tableName)
-        {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                // データが挿入されるか、更新されるかの判定
-                string query = (row.RowState == DataRowState.Added)
-                    ? GenerateInsertQuery(row, tableName)
-                    : GenerateUpdateQuery(row, tableName);
-
-                using (SqlCommand cmd = new SqlCommand(query, connection))
-                {
-                    // パラメータの追加
-                    for (int i = 0; i < row.ItemArray.Length; i++)
-                    {
-                        cmd.Parameters.AddWithValue($"@Param{i}", row[i]);
-                    }
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private string GenerateInsertQuery(DataRow row, string tableName)
-        {
-            // カラム数に合わせてパラメータを生成
-            string[] paramNames = new string[row.ItemArray.Length];
-            for (int i = 0; i < row.ItemArray.Length; i++)
-            {
-                paramNames[i] = $"@Param{i}";
-            }
-
-            // カラム名も指定して、パラメータを含む INSERT クエリを生成
-            string[] columnNames = row.Table.Columns.Cast<DataColumn>().Select(col => col.ColumnName).ToArray();
-
-            // VALUES 句に含まれる値の数を、列の数に合わせる
-            string valuesClause = string.Join(", ", paramNames);
-
-            return $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({valuesClause})";
-        }
-
-        private string GenerateUpdateQuery(DataRow row, string tableName)
+        public string GenerateUpdateQuery(DataRow row, string tableName)
         {
             // カラム数に合わせて SET 句を生成
             string[] setClauses = new string[row.ItemArray.Length];
@@ -171,8 +113,41 @@ namespace book_manager
                 setClauses[i] = $"{row.Table.Columns[i].ColumnName} = @Param{i}";
             }
 
+            // IDが変更された場合にメッセージを表示
+            if (row.RowState != DataRowState.Added && row["id", DataRowVersion.Original].ToString() != row["id"].ToString())
+            {
+                MessageBox.Show("IDは変更できません。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null; // メッセージを表示しているため、クエリは実行しない
+            }
+
             // パラメータを含む UPDATE クエリを生成
             return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @Param0";
+        }
+
+        public bool SaveRowToTable(DataRow row, string query)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                if (query != null) // クエリがnullでない場合に実行
+                {
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
+                    {
+                        // パラメータの追加
+                        for (int i = 0; i < row.ItemArray.Length; i++)
+                        {
+                            cmd.Parameters.AddWithValue($"@Param{i}", row[i]);
+                        }
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    return true; // 更新が成功したことを示す
+                }
+
+                return false; // 更新が成功しなかったことを示す
+            }
         }
     }
 }
