@@ -31,40 +31,36 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form_BookManager));
             dataGridView1 = new DataGridView();
             Label_BookManagement = new Label();
-            Button_AddBook = new Button();
+            Button_SaveData = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // dataGridView1
             // 
-            dataGridView1.AllowUserToAddRows = false;
-            dataGridView1.AllowUserToDeleteRows = false;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             resources.ApplyResources(dataGridView1, "dataGridView1");
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.ReadOnly = true;
             // 
             // Label_BookManagement
             // 
             resources.ApplyResources(Label_BookManagement, "Label_BookManagement");
             Label_BookManagement.Name = "Label_BookManagement";
             // 
-            // Button_AddBook
+            // Button_SaveData
             // 
-            resources.ApplyResources(Button_AddBook, "Button_AddBook");
-            Button_AddBook.Name = "Button_AddBook";
-            Button_AddBook.UseVisualStyleBackColor = true;
-            Button_AddBook.Click += Botton_addBook_Click;
+            resources.ApplyResources(Button_SaveData, "Button_SaveData");
+            Button_SaveData.Name = "Button_SaveData";
+            Button_SaveData.UseVisualStyleBackColor = true;
+            Button_SaveData.Click += Botton_SaveData_Click;
             // 
             // Form_BookManager
             // 
             resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(Button_AddBook);
+            Controls.Add(Button_SaveData);
             Controls.Add(Label_BookManagement);
             Controls.Add(dataGridView1);
             Name = "Form_BookManager";
-            Load += Form_BookManager_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -74,6 +70,6 @@
 
         private DataGridView dataGridView1;
         private Label Label_BookManagement;
-        private Button Button_AddBook;
+        private Button Button_SaveData;
     }
 }

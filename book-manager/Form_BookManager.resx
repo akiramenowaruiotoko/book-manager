@@ -173,28 +173,28 @@
   <data name="&gt;&gt;Label_BookManagement.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="Button_AddBook.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="Button_SaveData.Location" type="System.Drawing.Point, System.Drawing">
     <value>569, 22</value>
   </data>
-  <data name="Button_AddBook.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="Button_SaveData.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
   </data>
-  <data name="Button_AddBook.TabIndex" type="System.Int32, mscorlib">
+  <data name="Button_SaveData.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
-  <data name="Button_AddBook.Text" xml:space="preserve">
-    <value>Add Book</value>
+  <data name="Button_SaveData.Text" xml:space="preserve">
+    <value>Save Data</value>
   </data>
-  <data name="&gt;&gt;Button_AddBook.Name" xml:space="preserve">
-    <value>Button_AddBook</value>
+  <data name="&gt;&gt;Button_SaveData.Name" xml:space="preserve">
+    <value>Button_SaveData</value>
   </data>
-  <data name="&gt;&gt;Button_AddBook.Type" xml:space="preserve">
+  <data name="&gt;&gt;Button_SaveData.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;Button_AddBook.Parent" xml:space="preserve">
+  <data name="&gt;&gt;Button_SaveData.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="&gt;&gt;Button_AddBook.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;Button_SaveData.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
