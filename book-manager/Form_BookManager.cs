@@ -9,23 +9,28 @@ namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
+        // データベース接続文字列
         private string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
         private DatabaseManager databaseManager;
 
+        // フォームのコンストラクタ
         public Form_BookManager()
         {
             InitializeComponent();
 
+            // DatabaseManager インスタンスの初期化
             databaseManager = new DatabaseManager(connectionString);
 
             // フォームがロードされたときにデータを表示
             DisplayData();
         }
 
+        // データの表示メソッド
         private void DisplayData()
         {
             try
             {
+                // basic_information テーブルからデータを取得
                 DataTable dataTable = databaseManager.SelectAllFromTableWithRowNumber("basic_information");
 
                 // DataGridViewにデータを設定
@@ -33,14 +38,17 @@ namespace book_manager
             }
             catch (Exception ex)
             {
+                // エラーハンドリング: データの表示中にエラーが発生した場合
                 MessageBox.Show("データの表示中にエラーが発生しました: " + ex.Message);
             }
         }
 
+        // データ保存ボタンがクリックされたときのイベントハンドラ
         private void Botton_SaveData_Click(object sender, EventArgs e)
         {
             try
             {
+                // 変更がある場合のみデータベースに保存
                 DataTable modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
 
                 if (modifiedData != null)
@@ -54,53 +62,35 @@ namespace book_manager
                     // データソースに変更があったことを通知し、DataGridViewを更新
                     ((DataTable)dataGridView1.DataSource).AcceptChanges();
 
+                    // 保存成功のメッセージ
                     MessageBox.Show("変更がデータベースに保存されました。");
                 }
                 else
                 {
+                    // 変更がない場合のメッセージ
                     MessageBox.Show("変更がありません。");
                 }
             }
             catch (Exception ex)
             {
+                // エラーハンドリング: データベースへの保存中にエラーが発生した場合
                 MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
             }
         }
-
-        // 他のメソッドやクラスの実装
-
-        // カラムの型に応じてデフォルトの値を取得するメソッド
-        private object GetDefaultValueForColumnType(DataGridViewColumn column)
-        {
-            Type columnType = column.ValueType;
-
-            if (columnType == typeof(int))
-            {
-                return 0;
-            }
-            else if (columnType == typeof(string))
-            {
-                return string.Empty;
-            }
-            else if (columnType == typeof(DateTime))
-            {
-                return DateTime.Now;
-            }
-            // 他の型に対する処理も追加可能
-
-            return DBNull.Value;
-        }
     }
 
+    // データベース操作クラス
     public class DatabaseManager
     {
         private string connectionString;
 
+        // コンストラクタ
         public DatabaseManager(string connectionString)
         {
             this.connectionString = connectionString;
         }
 
+        // テーブルの全データ取得メソッド
         public DataTable SelectAllFromTableWithRowNumber(string tableName)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -120,6 +110,7 @@ namespace book_manager
             }
         }
 
+        // 行の保存メソッド
         public void SaveRowToTable(DataRow row, string tableName)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -144,6 +135,7 @@ namespace book_manager
             }
         }
 
+        // INSERT クエリ生成メソッド
         private string GenerateInsertQuery(DataRow row, string tableName)
         {
             // カラム数に合わせてパラメータを生成
@@ -162,6 +154,7 @@ namespace book_manager
             return $"INSERT INTO {tableName} ({string.Join(", ", columnNames)}) VALUES ({valuesClause})";
         }
 
+        // UPDATE クエリ生成メソッド
         private string GenerateUpdateQuery(DataRow row, string tableName)
         {
             // カラム数に合わせて SET 句を生成
