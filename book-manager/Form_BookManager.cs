@@ -17,7 +17,7 @@ namespace book_manager
         // read DB table basic_information
         private void Form_BookManager_Load(object sender, EventArgs e)
         {
-            DataTable dt = OperateDataBase.ReadDB("SELECT ROW_NUMBER() OVER(ORDER BY control_number ASC) no, * FROM basic_information;");
+            DataTable dt = DatabaseManager.ReadDB("SELECT ROW_NUMBER() OVER(ORDER BY control_number ASC) no, * FROM basic_information;");
             // output dataGridView
             dataGridView1.DataSource = dt;
         }
@@ -28,4 +28,6 @@ namespace book_manager
         }
     }
 }
+
+
 
