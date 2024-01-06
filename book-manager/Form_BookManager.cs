@@ -108,7 +108,7 @@ namespace book_manager
                 connection.Open();
 
                 // ROW_NUMBER() を使用したクエリ
-                string query = $"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) no, * FROM {tableName}";
+                string query = $"SELECT * FROM {tableName}";
 
                 using (SqlDataAdapter adapter = new SqlDataAdapter(query, connection))
                 {
