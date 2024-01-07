@@ -173,28 +173,28 @@
   <data name="&gt;&gt;Label_BookManagement.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="Button_SaveData.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="Button_Save.Location" type="System.Drawing.Point, System.Drawing">
     <value>1402, 13</value>
   </data>
-  <data name="Button_SaveData.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="Button_Save.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
   </data>
-  <data name="Button_SaveData.TabIndex" type="System.Int32, mscorlib">
+  <data name="Button_Save.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
-  <data name="Button_SaveData.Text" xml:space="preserve">
+  <data name="Button_Save.Text" xml:space="preserve">
     <value>Save</value>
   </data>
-  <data name="&gt;&gt;Button_SaveData.Name" xml:space="preserve">
-    <value>Button_SaveData</value>
+  <data name="&gt;&gt;Button_Save.Name" xml:space="preserve">
+    <value>Button_Save</value>
   </data>
-  <data name="&gt;&gt;Button_SaveData.Type" xml:space="preserve">
+  <data name="&gt;&gt;Button_Save.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;Button_SaveData.Parent" xml:space="preserve">
+  <data name="&gt;&gt;Button_Save.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="&gt;&gt;Button_SaveData.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;Button_Save.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />

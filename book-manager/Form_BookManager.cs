@@ -30,7 +30,7 @@ namespace book_manager
             }
         }
 
-        private void Botton_SaveData_Click(object sender, EventArgs e)
+        private void Botton_Save_Click(object sender, EventArgs e)
         {
             try
             {
@@ -47,9 +47,6 @@ namespace book_manager
                         else if (row.RowState == DataRowState.Deleted)
                             DeleteData(row);
                     }
-
-                    ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                    MessageBox.Show("変更がデータベースに保存されました。");
                 }
                 else
                 {
@@ -83,7 +80,10 @@ namespace book_manager
             try
             {
                 string updateQuery = databaseManager.GenerateUpdateQuery(updatedRow, "basic_information");
-                databaseManager.SaveRowToTable(updatedRow, updateQuery);
+                databaseManager.UpdateRowToTable(updatedRow, updateQuery);
+
+                ((DataTable)dataGridView1.DataSource).AcceptChanges();
+                MessageBox.Show("変更がデータベースに保存されました。");
             }
             catch (Exception ex)
             {
@@ -192,7 +192,7 @@ namespace book_manager
             return $"DELETE FROM {tableName} WHERE id = @Param0";
         }
 
-        public bool SaveRowToTable(DataRow row, string query)
+        public bool UpdateRowToTable(DataRow row, string query)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, connection))
