@@ -8,10 +8,13 @@ namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
-        // 接続文字列を設定
+        // データベース接続文字列を取得
         private string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
+
+        // データベースマネージャーのインスタンスを作成
         private DatabaseManager databaseManager;
 
+        // フォームのコンストラクタ
         public Form_BookManager()
         {
             InitializeComponent();
@@ -21,11 +24,9 @@ namespace book_manager
 
             // フォームがロードされたときにデータを表示
             DisplayData();
-
-            // ID列を読み取り専用に設定
-            dataGridView1.Columns["id"].ReadOnly = true;
         }
 
+        // データを表示するメソッド
         private void DisplayData()
         {
             try
@@ -43,6 +44,7 @@ namespace book_manager
             }
         }
 
+        // 保存ボタンがクリックされたときのイベントハンドラ
         private void Botton_SaveData_Click(object sender, EventArgs e)
         {
             try
@@ -54,14 +56,21 @@ namespace book_manager
                 {
                     foreach (DataRow row in modifiedData.Rows)
                     {
-                        // UPDATE クエリを生成
-                        string updateQuery = databaseManager.GenerateUpdateQuery(row, "basic_information");
-
-                        // データベースに行を保存
-                        if (databaseManager.SaveRowToTable(row, updateQuery))
+                        // 新しい行か既存の行かを判定
+                        if (row.RowState == DataRowState.Added)
                         {
-                            // 更新が成功した場合、成功メッセージを表示
-                            MessageBox.Show("変更がデータベースに保存されました。");
+                            // 新しい行の場合、挿入メソッドを呼び出し
+                            InsertData(row);
+                        }
+                        else if (row.RowState == DataRowState.Modified)
+                        {
+                            // 既存の行の場合、UPDATE クエリを生成してデータベースに保存
+                            string updateQuery = databaseManager.GenerateUpdateQuery(row, "basic_information");
+                            if (databaseManager.SaveRowToTable(row, updateQuery))
+                            {
+                                // 更新が成功した場合、成功メッセージを表示
+                                MessageBox.Show("変更がデータベースに保存されました。");
+                            }
                         }
                     }
 
@@ -79,17 +88,50 @@ namespace book_manager
                 MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
             }
         }
+
+        // 新しいデータを挿入するメソッド
+        private void InsertData(DataRow newRow)
+        {
+            try
+            {
+                // INSERT クエリを生成
+                string insertQuery = databaseManager.GenerateInsertQuery(newRow, "basic_information");
+
+                // データベースに新しい行を挿入
+                if (databaseManager.InsertRowToTable(newRow, insertQuery))
+                {
+                    // 挿入が成功した場合、成功メッセージを表示
+                    MessageBox.Show("新しいデータがデータベースに挿入されました。");
+                }
+
+                // データソースに変更があったことを通知し、DataGridViewを更新
+                ((DataTable)dataGridView1.DataSource).AcceptChanges();
+            }
+            catch (Exception ex)
+            {
+                // エラーハンドリングの強化
+                MessageBox.Show("データベースへの挿入中にエラーが発生しました: " + ex.Message);
+            }
+        }
+
+        private void Button_Reload_Click(object sender, EventArgs e)
+        {
+            DisplayData();
+        }
     }
 
     public class DatabaseManager
     {
+        // データベース接続文字列
         private string connectionString;
 
+        // コンストラクタ
         public DatabaseManager(string connectionString)
         {
             this.connectionString = connectionString;
         }
 
+        // テーブルからすべてのデータを取得するメソッド
         public DataTable SelectAllFromTable(string tableName)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -104,6 +146,7 @@ namespace book_manager
             }
         }
 
+        // UPDATE クエリを生成するメソッド
         public string GenerateUpdateQuery(DataRow row, string tableName)
         {
             // カラム数に合わせて SET 句を生成
@@ -117,6 +160,23 @@ namespace book_manager
             return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @Param0";
         }
 
+        // INSERT クエリを生成するメソッド
+        public string GenerateInsertQuery(DataRow row, string tableName)
+        {
+            // カラム数に合わせて INSERT クエリを生成
+            string[] columns = new string[row.ItemArray.Length];
+            string[] values = new string[row.ItemArray.Length];
+            for (int i = 0; i < row.ItemArray.Length; i++)
+            {
+                columns[i] = row.Table.Columns[i].ColumnName;
+                values[i] = $"@Param{i}";
+            }
+
+            // パラメータを含む INSERT クエリを生成
+            return $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+        }
+
+        // 行をデータベースに保存するメソッド
         public bool SaveRowToTable(DataRow row, string query)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -134,6 +194,26 @@ namespace book_manager
             }
 
             return true; // 更新が成功したことを示す
+        }
+
+        // 新しい行をデータベースに挿入するメソッド
+        public bool InsertRowToTable(DataRow row, string query)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, connection))
+            {
+                // パラメータの追加
+                for (int i = 0; i < row.ItemArray.Length; i++)
+                {
+                    cmd.Parameters.AddWithValue($"@Param{i}", row[i]);
+                }
+
+                // データベースに新しい行を挿入
+                connection.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            return true; // 挿入が成功したことを示す
         }
     }
 }

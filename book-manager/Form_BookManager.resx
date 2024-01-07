@@ -141,7 +141,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="Label_BookManagement.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -171,10 +171,10 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Label_BookManagement.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="Button_SaveData.Location" type="System.Drawing.Point, System.Drawing">
-    <value>569, 22</value>
+    <value>1402, 13</value>
   </data>
   <data name="Button_SaveData.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
@@ -183,7 +183,7 @@
     <value>2</value>
   </data>
   <data name="Button_SaveData.Text" xml:space="preserve">
-    <value>Save Data</value>
+    <value>Save</value>
   </data>
   <data name="&gt;&gt;Button_SaveData.Name" xml:space="preserve">
     <value>Button_SaveData</value>
@@ -195,6 +195,34 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Button_SaveData.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Button_Reload.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="Button_Reload.Location" type="System.Drawing.Point, System.Drawing">
+    <value>1185, 12</value>
+  </data>
+  <data name="Button_Reload.Size" type="System.Drawing.Size, System.Drawing">
+    <value>191, 68</value>
+  </data>
+  <data name="Button_Reload.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="Button_Reload.Text" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="&gt;&gt;Button_Reload.Name" xml:space="preserve">
+    <value>Button_Reload</value>
+  </data>
+  <data name="&gt;&gt;Button_Reload.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;Button_Reload.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;Button_Reload.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

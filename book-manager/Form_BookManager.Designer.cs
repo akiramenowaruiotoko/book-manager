@@ -32,6 +32,7 @@
             dataGridView1 = new DataGridView();
             Label_BookManagement = new Label();
             Button_SaveData = new Button();
+            Button_Reload = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -53,10 +54,18 @@
             Button_SaveData.UseVisualStyleBackColor = true;
             Button_SaveData.Click += Botton_SaveData_Click;
             // 
+            // Button_Reload
+            // 
+            resources.ApplyResources(Button_Reload, "Button_Reload");
+            Button_Reload.Name = "Button_Reload";
+            Button_Reload.UseVisualStyleBackColor = true;
+            Button_Reload.Click += Button_Reload_Click;
+            // 
             // Form_BookManager
             // 
             resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(Button_Reload);
             Controls.Add(Button_SaveData);
             Controls.Add(Label_BookManagement);
             Controls.Add(dataGridView1);
@@ -71,5 +80,6 @@
         private DataGridView dataGridView1;
         private Label Label_BookManagement;
         private Button Button_SaveData;
+        private Button Button_Reload;
     }
 }
