@@ -9,23 +9,31 @@ namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
+        // SQL Serverの接続文字列
         private readonly string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
+
+        // データベース管理用のオブジェクト
         private readonly DatabaseManager databaseManager;
 
         // 変更前のIDを保持するためのディクショナリ
         private readonly Dictionary<string, string> originalIds = new Dictionary<string, string>();
 
+        // コンストラクタ
         public Form_BookManager()
         {
             InitializeComponent();
+            // データベースマネージャのインスタンス化
             databaseManager = new DatabaseManager(connectionString);
+            // フォームを初期化してデータを表示
             DisplayData();
         }
 
+        // データを表示するメソッド
         private void DisplayData()
         {
             try
             {
+                // データベースから"basic_information"テーブルのデータを取得
                 DataTable dataTable = databaseManager.SelectAllFromTable("basic_information");
 
                 // 変更前のIDを保持
@@ -35,6 +43,7 @@ namespace book_manager
                     originalIds.Add(row["id", DataRowVersion.Original].ToString(), row["id", DataRowVersion.Original].ToString());
                 }
 
+                // 取得したデータをDataGridViewに表示
                 dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
@@ -43,16 +52,20 @@ namespace book_manager
             }
         }
 
+        // 保存ボタンのクリックイベントハンドラ
         private void Botton_Save_Click(object sender, EventArgs e)
         {
             try
             {
+                // DataGridViewの変更を取得
                 var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
 
+                // 変更がある場合の処理
                 if (modifiedData != null)
                 {
                     foreach (DataRow row in modifiedData.Rows)
                     {
+                        // 行の状態によって処理を分岐
                         if (row.RowState == DataRowState.Added)
                             InsertData(row);
                         else if (row.RowState == DataRowState.Modified)
@@ -72,13 +85,16 @@ namespace book_manager
             }
         }
 
+        // 新しいデータを挿入するメソッド
         private void InsertData(DataRow newRow)
         {
             try
             {
+                // 新しいデータの挿入クエリを生成して実行
                 string insertQuery = databaseManager.GenerateInsertQuery(newRow, "basic_information");
                 databaseManager.InsertRowToTable(newRow, insertQuery);
 
+                // データベースへの変更を確定し、メッセージを表示
                 ((DataTable)dataGridView1.DataSource).AcceptChanges();
                 MessageBox.Show("新しいデータがデータベースに挿入されました。");
             }
@@ -88,6 +104,7 @@ namespace book_manager
             }
         }
 
+        // データの更新メソッド
         private void UpdateData(DataRow updatedRow)
         {
             try
@@ -100,6 +117,7 @@ namespace book_manager
                 string updateQuery = databaseManager.GenerateUpdateQuery(updatedRow, "basic_information", originalIds[originalId]);
                 databaseManager.UpdateRowToTable(updatedRow, updateQuery);
 
+                // データベースへの変更を確定し、メッセージを表示
                 ((DataTable)dataGridView1.DataSource).AcceptChanges();
                 MessageBox.Show("変更がデータベースに保存されました。");
             }
@@ -109,13 +127,16 @@ namespace book_manager
             }
         }
 
+        // データの削除メソッド
         private void DeleteData(DataRow deletedRow)
         {
             try
             {
+                // 削除クエリを生成して実行
                 string deleteQuery = databaseManager.GenerateDeleteQuery(deletedRow, "basic_information");
                 databaseManager.DeleteRowFromTable(deletedRow, deleteQuery);
 
+                // データベースへの変更を確定し、メッセージを表示
                 ((DataTable)dataGridView1.DataSource).AcceptChanges();
                 MessageBox.Show("データがデータベースから削除されました。");
             }
@@ -125,55 +146,30 @@ namespace book_manager
             }
         }
 
-        private void Form_BookManager_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            ApplyChangesToDatabase();
-        }
-
-        private void ApplyChangesToDatabase()
-        {
-            try
-            {
-                var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
-
-                if (modifiedData != null)
-                {
-                    foreach (DataRow row in modifiedData.Rows)
-                    {
-                        if (row.RowState == DataRowState.Added)
-                            InsertData(row);
-                        else if (row.RowState == DataRowState.Modified)
-                            UpdateData(row);
-                        else if (row.RowState == DataRowState.Deleted)
-                            DeleteData(row);
-                    }
-
-                    ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("データベースへの反映中にエラーが発生しました: " + ex.Message);
-            }
-        }
-
+        // リロードボタンのクリックイベントハンドラ
         private void Button_Reload_Click(object sender, EventArgs e)
         {
+            // データの再読み込み
             DisplayData();
         }
     }
 
+    // データベース操作用のクラス
     public class DatabaseManager
     {
+        // SQL Serverの接続文字列
         private readonly string connectionString;
 
+        // コンストラクタ
         public DatabaseManager(string connectionString)
         {
             this.connectionString = connectionString;
         }
 
+        // テーブルからすべてのデータを取得するメソッド
         public DataTable SelectAllFromTable(string tableName)
         {
+            // SqlConnectionとSqlDataAdapterを使用してデータを取得
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlDataAdapter adapter = new SqlDataAdapter($"SELECT * FROM {tableName}", connection))
             {
@@ -183,17 +179,22 @@ namespace book_manager
             }
         }
 
+        // 更新クエリを生成するメソッド
         public string GenerateUpdateQuery(DataRow row, string tableName, string currentId)
         {
+            // 更新クエリのSET句を生成
             string[] setClauses = new string[row.ItemArray.Length];
             for (int i = 0; i < row.ItemArray.Length; i++)
                 setClauses[i] = $"{row.Table.Columns[i].ColumnName} = @Param{i}";
 
+            // 更新クエリを返す
             return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = '{currentId}'";
         }
 
+        // 挿入クエリを生成するメソッド
         public string GenerateInsertQuery(DataRow row, string tableName)
         {
+            // 挿入クエリのカラムと値を生成
             string[] columns = new string[row.ItemArray.Length];
             string[] values = new string[row.ItemArray.Length];
             for (int i = 0; i < row.ItemArray.Length; i++)
@@ -202,16 +203,21 @@ namespace book_manager
                 values[i] = $"@Param{i}";
             }
 
+            // 挿入クエリを返す
             return $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
         }
 
+        // 削除クエリを生成するメソッド
         public string GenerateDeleteQuery(DataRow row, string tableName)
         {
+            // 削除クエリを返す
             return $"DELETE FROM {tableName} WHERE id = @Param0";
         }
 
+        // テーブルの行を更新するメソッド
         public bool UpdateRowToTable(DataRow row, string query)
         {
+            // 更新クエリを実行
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, connection))
             {
@@ -225,8 +231,10 @@ namespace book_manager
             return true;
         }
 
+        // テーブルに新しい行を挿入するメソッド
         public bool InsertRowToTable(DataRow row, string query)
         {
+            // 挿入クエリを実行
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, connection))
             {
@@ -240,8 +248,10 @@ namespace book_manager
             return true;
         }
 
+        // テーブルから行を削除するメソッド
         public bool DeleteRowFromTable(DataRow row, string query)
         {
+            // 削除クエリを実行
             using (SqlConnection connection = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(query, connection))
             {
