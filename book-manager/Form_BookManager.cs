@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
@@ -11,6 +12,9 @@ namespace book_manager
         private readonly string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
         private readonly DatabaseManager databaseManager;
 
+        // 変更前のIDを保持するためのディクショナリ
+        private readonly Dictionary<string, string> originalIds = new Dictionary<string, string>();
+
         public Form_BookManager()
         {
             InitializeComponent();
@@ -22,7 +26,16 @@ namespace book_manager
         {
             try
             {
-                dataGridView1.DataSource = databaseManager.SelectAllFromTable("basic_information");
+                DataTable dataTable = databaseManager.SelectAllFromTable("basic_information");
+
+                // 変更前のIDを保持
+                originalIds.Clear();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    originalIds.Add(row["id", DataRowVersion.Original].ToString(), row["id", DataRowVersion.Original].ToString());
+                }
+
+                dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
             {
@@ -79,7 +92,12 @@ namespace book_manager
         {
             try
             {
-                string updateQuery = databaseManager.GenerateUpdateQuery(updatedRow, "basic_information");
+                // 変更前のIDを取得
+                string originalId = updatedRow["id", DataRowVersion.Original].ToString();
+                string currentId = updatedRow["id", DataRowVersion.Current].ToString();
+
+                // 変更前のIDを使用して更新クエリを生成
+                string updateQuery = databaseManager.GenerateUpdateQuery(updatedRow, "basic_information", originalIds[originalId]);
                 databaseManager.UpdateRowToTable(updatedRow, updateQuery);
 
                 ((DataTable)dataGridView1.DataSource).AcceptChanges();
@@ -165,13 +183,13 @@ namespace book_manager
             }
         }
 
-        public string GenerateUpdateQuery(DataRow row, string tableName)
+        public string GenerateUpdateQuery(DataRow row, string tableName, string currentId)
         {
             string[] setClauses = new string[row.ItemArray.Length];
             for (int i = 0; i < row.ItemArray.Length; i++)
                 setClauses[i] = $"{row.Table.Columns[i].ColumnName} = @Param{i}";
 
-            return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @Param0";
+            return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = '{currentId}'";
         }
 
         public string GenerateInsertQuery(DataRow row, string tableName)
