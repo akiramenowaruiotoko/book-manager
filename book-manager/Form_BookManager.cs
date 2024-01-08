@@ -23,6 +23,9 @@ namespace book_manager
             databaseManager = new DatabaseManager(connectionString);
             // フォームを初期化してデータを表示
             DisplayData();
+            // no列を編集不可に設定
+            dataGridView1.Columns["no"].ReadOnly = true;
+
         }
 
         // データを表示するメソッド
@@ -47,6 +50,13 @@ namespace book_manager
             {
                 MessageBox.Show("データの表示中にエラーが発生しました: " + ex.Message);
             }
+        }
+
+        // リロードボタンのクリックイベントハンドラ
+        private void Button_Reload_Click(object sender, EventArgs e)
+        {
+            // データの再読み込み
+            DisplayData();
         }
 
         // 保存ボタンのクリックイベントハンドラ
@@ -142,13 +152,6 @@ namespace book_manager
                 MessageBox.Show("データベースからの削除中にエラーが発生しました: " + ex.Message);
             }
         }
-
-        // リロードボタンのクリックイベントハンドラ
-        private void Button_Reload_Click(object sender, EventArgs e)
-        {
-            // データの再読み込み
-            DisplayData();
-        }
     }
 
     // データベース操作用のクラス
@@ -157,12 +160,12 @@ namespace book_manager
         // SQL Serverの接続文字列
         private readonly string connectionString = connectionString;
 
-        // テーブルからすべてのデータを取得するメソッド
+        // DBテーブルからすべてのデータを取得するメソッド
         public DataTable SelectAllFromTable(string tableName)
         {
             // SqlConnectionとSqlDataAdapterを使用してデータを取得
             using SqlConnection connection = new(connectionString);
-            using SqlDataAdapter adapter = new($"SELECT * FROM {tableName}", connection);
+            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) no, * FROM {tableName}", connection); // no列を追加
             DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
@@ -171,10 +174,10 @@ namespace book_manager
         // 更新クエリを生成するメソッド
         public static string GenerateUpdateQuery(DataRow row, string tableName, string currentId)
         {
-            // 更新クエリのSET句を生成
-            string[] setClauses = new string[row.ItemArray.Length];
-            for (int i = 0; i < row.ItemArray.Length; i++)
-                setClauses[i] = $"{row.Table.Columns[i].ColumnName} = @Param{i}";
+            // 更新クエリのSET句を生成 (No列は生成しない)
+            string[] setClauses = new string[row.ItemArray.Length - 1];
+            for (int i = 0; i < row.ItemArray.Length - 1; i++) 
+                setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
 
             // 更新クエリを返す
             return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = '{currentId}'";
@@ -183,12 +186,12 @@ namespace book_manager
         // 挿入クエリを生成するメソッド
         public static string GenerateInsertQuery(DataRow row, string tableName)
         {
-            // 挿入クエリのカラムと値を生成
-            string[] columns = new string[row.ItemArray.Length];
-            string[] values = new string[row.ItemArray.Length];
-            for (int i = 0; i < row.ItemArray.Length; i++)
+            // 挿入クエリのカラムと値を生成 (No列は生成しない)
+            string[] columns = new string[row.ItemArray.Length - 1];
+            string[] values = new string[row.ItemArray.Length - 1];
+            for (int i = 0; i < row.ItemArray.Length - 1; i++)
             {
-                columns[i] = row.Table.Columns[i].ColumnName;
+                columns[i] = row.Table.Columns[i + 1].ColumnName;
                 values[i] = $"@Param{i}";
             }
 
@@ -210,8 +213,8 @@ namespace book_manager
             // 更新クエリを実行
             using SqlConnection connection = new(connectionString);
             using SqlCommand cmd = new(query, connection);
-            for (int i = 0; i < row.ItemArray.Length; i++)
-                cmd.Parameters.AddWithValue($"@Param{i}", row[i]);
+            for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
 
             connection.Open();
             cmd.ExecuteNonQuery();
@@ -225,8 +228,8 @@ namespace book_manager
             // 挿入クエリを実行
             using SqlConnection connection = new(connectionString);
             using SqlCommand cmd = new(query, connection);
-            for (int i = 0; i < row.ItemArray.Length; i++)
-                cmd.Parameters.AddWithValue($"@Param{i}", row[i]);
+            for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
 
             connection.Open();
             cmd.ExecuteNonQuery();
