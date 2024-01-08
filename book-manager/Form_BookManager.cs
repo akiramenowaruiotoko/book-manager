@@ -1,50 +1,59 @@
+using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Windows.Forms;
 using System.Configuration;
 
 namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
-        // SQL Serverの接続文字列
-        private readonly string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
+        private readonly DataManager formManager;
+        private readonly string tableName = "basic_information";
 
-        // データベース管理用のオブジェクト
-        private readonly DatabaseManager databaseManager;
-
-        // 変更前のIDを保持するためのディクショナリ
-        private readonly Dictionary<string, string> originalIds = [];
-
-        // コンストラクタ
         public Form_BookManager()
         {
             InitializeComponent();
-            // データベースマネージャのインスタンス化
-            databaseManager = new DatabaseManager(connectionString);
-            // フォームを初期化してデータを表示
-            DisplayData();
-            // no列を編集不可に設定
-            dataGridView1.Columns["no"].ReadOnly = true;
-
+            formManager = new DataManager();
+            formManager.DisplayData(dataGridView1);
+            dataGridView1.Columns["No"].ReadOnly = true;
         }
 
-        // データを表示するメソッド
-        private void DisplayData()
+        private void Button_Reload_Click(object sender, EventArgs e)
+        {
+            formManager.DisplayData(dataGridView1);
+        }
+
+        private void Botton_Save_Click(object sender, EventArgs e)
         {
             try
             {
-                // データベースから"basic_information"テーブルのデータを取得
-                DataTable dataTable = databaseManager.SelectAllFromTable("basic_information");
+                formManager.SaveChanges(dataGridView1, tableName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
+            }
+        }
+    }
 
-                // 変更前のIDを保持
-                originalIds.Clear();
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    originalIds.Add(row["id", DataRowVersion.Original].ToString()!, row["id", DataRowVersion.Original].ToString()!);
-                }
+    public class DataManager
+    {
+        private readonly DatabaseManager databaseManager;
+        private readonly string tableName = "basic_information";
 
-                // 取得したデータをDataGridViewに表示
-                dataGridView1.DataSource = dataTable;
+        public DataManager()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
+            databaseManager = new DatabaseManager(connectionString);
+        }
+
+        public void DisplayData(DataGridView dataGridView)
+        {
+            try
+            {
+                DataTable dataTable = databaseManager.SelectAllFromTable(tableName);
+                dataGridView.DataSource = dataTable;
             }
             catch (Exception ex)
             {
@@ -52,203 +61,109 @@ namespace book_manager
             }
         }
 
-        // リロードボタンのクリックイベントハンドラ
-        private void Button_Reload_Click(object sender, EventArgs e)
+        public void SaveChanges(DataGridView dataGridView, string tableName)
         {
-            // データの再読み込み
-            DisplayData();
-        }
+            var modifiedData = ((DataTable)dataGridView.DataSource).GetChanges();
 
-        // 保存ボタンのクリックイベントハンドラ
-        private void Botton_Save_Click(object sender, EventArgs e)
-        {
-            try
+            if (modifiedData != null)
             {
-                // DataGridViewの変更を取得
-                var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
-
-                // 変更がある場合の処理
-                if (modifiedData != null)
+                foreach (DataRow row in modifiedData.Rows)
                 {
-                    foreach (DataRow row in modifiedData.Rows)
-                    {
-                        // 行の状態によって処理を分岐
-                        if (row.RowState == DataRowState.Added)
-                            InsertData(row);
-                        else if (row.RowState == DataRowState.Modified)
-                            UpdateData(row);
-                        else if (row.RowState == DataRowState.Deleted)
-                            DeleteData(row);
-                    }
+                    databaseManager.ManageRow(row, tableName);
                 }
-                else
-                {
-                    MessageBox.Show("変更がありません。");
-                }
+                ((DataTable)dataGridView.DataSource).AcceptChanges();
+                MessageBox.Show("変更がデータベースに保存されました.");
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
-            }
-        }
-
-        // 新しいデータを挿入するメソッド
-        private void InsertData(DataRow newRow)
-        {
-            try
-            {
-                // 新しいデータの挿入クエリを生成して実行
-                string insertQuery = DatabaseManager.GenerateInsertQuery(newRow, "basic_information");
-                databaseManager.InsertRowToTable(newRow, insertQuery);
-
-                // データベースへの変更を確定し、メッセージを表示
-                ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                MessageBox.Show("新しいデータがデータベースに挿入されました。");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("データベースへの挿入中にエラーが発生しました: " + ex.Message);
-            }
-        }
-
-        // データの更新メソッド
-        private void UpdateData(DataRow updatedRow)
-        {
-            try
-            {
-                // 変更前のIDを取得
-                string originalId = updatedRow["id", DataRowVersion.Original].ToString()!;
-                string? currentId = updatedRow["id", DataRowVersion.Current].ToString(); // idがnullの場合はcatchで処理
-
-                // 変更前のIDを使用して更新クエリを生成
-                string updateQuery = DatabaseManager.GenerateUpdateQuery(updatedRow, "basic_information", originalIds[originalId]);
-                databaseManager.UpdateRowToTable(updatedRow, updateQuery);
-
-                // データベースへの変更を確定し、メッセージを表示
-                ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                MessageBox.Show("変更がデータベースに保存されました。");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("データベースへの更新中にエラーが発生しました: " + ex.Message);
-            }
-        }
-
-        // データの削除メソッド
-        private void DeleteData(DataRow deletedRow)
-        {
-            try
-            {
-                // 削除クエリを生成して実行
-                string deleteQuery = DatabaseManager.GenerateDeleteQuery(deletedRow, "basic_information");
-                databaseManager.DeleteRowFromTable(deletedRow, deleteQuery);
-
-                // データベースへの変更を確定し、メッセージを表示
-                ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                MessageBox.Show("データがデータベースから削除されました。");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("データベースからの削除中にエラーが発生しました: " + ex.Message);
+                MessageBox.Show("変更がありません.");
             }
         }
     }
 
-    // データベース操作用のクラス
-    public class DatabaseManager(string connectionString)
+    public class DatabaseManager
     {
-        // SQL Serverの接続文字列
-        private readonly string connectionString = connectionString;
+        public readonly string ConnectionString;
 
-        // DBテーブルからすべてのデータを取得するメソッド
+        public DatabaseManager(string connectionString)
+        {
+            this.ConnectionString = connectionString;
+        }
+
         public DataTable SelectAllFromTable(string tableName)
         {
-            // SqlConnectionとSqlDataAdapterを使用してデータを取得
-            using SqlConnection connection = new(connectionString);
-            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) no, * FROM {tableName}", connection); // no列を追加
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableName}", connection);
             DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
         }
-
-        // 更新クエリを生成するメソッド
-        public static string GenerateUpdateQuery(DataRow row, string tableName, string currentId)
+        public void ManageRow(DataRow row, string tableName)
         {
-            // 更新クエリのSET句を生成 (No列は生成しない)
-            string[] setClauses = new string[row.ItemArray.Length - 1];
-            for (int i = 0; i < row.ItemArray.Length - 1; i++) 
-                setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            {
+                connection.Open();
 
-            // 更新クエリを返す
-            return $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = '{currentId}'";
+                using (SqlCommand cmd = new SqlCommand(null, connection))
+                {
+                    switch (row.RowState)
+                    {
+                        case DataRowState.Added:
+                            ConfigureInsertCommand(cmd, row, tableName);
+                            break;
+
+                        case DataRowState.Modified:
+                            ConfigureUpdateCommand(cmd, row, tableName);
+                            break;
+
+                        case DataRowState.Deleted:
+                            ConfigureDeleteCommand(cmd, row, tableName);
+                            break;
+
+                        default:
+                            // Handle other cases or throw an exception if needed
+                            throw new ArgumentException("Unsupported DataRowState");
+                    }
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
-        // 挿入クエリを生成するメソッド
-        public static string GenerateInsertQuery(DataRow row, string tableName)
+        private void ConfigureInsertCommand(SqlCommand cmd, DataRow row, string tableName)
         {
-            // 挿入クエリのカラムと値を生成 (No列は生成しない)
             string[] columns = new string[row.ItemArray.Length - 1];
             string[] values = new string[row.ItemArray.Length - 1];
+
             for (int i = 0; i < row.ItemArray.Length - 1; i++)
             {
                 columns[i] = row.Table.Columns[i + 1].ColumnName;
                 values[i] = $"@Param{i}";
+                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
             }
 
-            // 挿入クエリを返す
-            return $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+            cmd.CommandText = $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
         }
 
-
-        // 削除クエリを生成するメソッド
-        public static string GenerateDeleteQuery(DataRow row, string tableName)
+        private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row, string tableName)
         {
-            // 削除クエリを返す
-            return $"DELETE FROM {tableName} WHERE id = @Param0";
-        }
+            string[] setClauses = new string[row.ItemArray.Length - 1];
 
-        // テーブルの行を更新するメソッド
-        public bool UpdateRowToTable(DataRow row, string query)
-        {
-            // 更新クエリを実行
-            using SqlConnection connection = new(connectionString);
-            using SqlCommand cmd = new(query, connection);
             for (int i = 0; i < row.ItemArray.Length - 1; i++)
+            {
+                setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
                 cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+            }
 
-            connection.Open();
-            cmd.ExecuteNonQuery();
+            cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
-            return true;
+            cmd.CommandText = $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
         }
 
-        // テーブルに新しい行を挿入するメソッド
-        public bool InsertRowToTable(DataRow row, string query)
+        private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row, string tableName)
         {
-            // 挿入クエリを実行
-            using SqlConnection connection = new(connectionString);
-            using SqlCommand cmd = new(query, connection);
-            for (int i = 0; i < row.ItemArray.Length - 1; i++)
-                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
-
-            connection.Open();
-            cmd.ExecuteNonQuery();
-
-            return true;
+            cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+            cmd.CommandText = $"DELETE FROM {tableName} WHERE id = @ParamID";
         }
 
-        // テーブルから行を削除するメソッド
-        public bool DeleteRowFromTable(DataRow row, string query)
-        {
-            // 削除クエリを実行
-            using SqlConnection connection = new(connectionString);
-            using SqlCommand cmd = new(query, connection);
-            cmd.Parameters.AddWithValue($"@Param0", row["id", DataRowVersion.Original]);
-
-            connection.Open();
-            cmd.ExecuteNonQuery();
-
-            return true;
-        }
     }
 }
