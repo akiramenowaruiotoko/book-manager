@@ -33,6 +33,7 @@
             Label_BookManagement = new Label();
             Button_Save = new Button();
             Button_Reload = new Button();
+            comboBox_tableName = new ComboBox();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -64,10 +65,19 @@
             Button_Reload.UseVisualStyleBackColor = true;
             Button_Reload.Click += Button_Reload_Click;
             // 
+            // comboBox_tableName
+            // 
+            resources.ApplyResources(comboBox_tableName, "comboBox_tableName");
+            comboBox_tableName.FormattingEnabled = true;
+            comboBox_tableName.Items.AddRange(new object[] { resources.GetString("comboBox_tableName.Items"), resources.GetString("comboBox_tableName.Items1"), resources.GetString("comboBox_tableName.Items2"), resources.GetString("comboBox_tableName.Items3"), resources.GetString("comboBox_tableName.Items4") });
+            comboBox_tableName.Name = "comboBox_tableName";
+            comboBox_tableName.SelectedIndexChanged += ComboBox_tableName_SelectedIndexChanged;
+            // 
             // Form_BookManager
             // 
             resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(comboBox_tableName);
             Controls.Add(Button_Reload);
             Controls.Add(Button_Save);
             Controls.Add(Label_BookManagement);
@@ -84,5 +94,6 @@
         private Label Label_BookManagement;
         private Button Button_Save;
         private Button Button_Reload;
+        private ComboBox comboBox_tableName;
     }
 }

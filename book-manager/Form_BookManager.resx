@@ -126,7 +126,7 @@
     <value>82</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1581, 549</value>
+    <value>1755, 549</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -141,7 +141,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;dataGridView1.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="Label_BookManagement.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -171,10 +171,10 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Label_BookManagement.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="Button_Save.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1402, 13</value>
+    <value>1577, 12</value>
   </data>
   <data name="Button_Save.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
@@ -195,14 +195,14 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Button_Save.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="Button_Reload.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
   </data>
   <data name="Button_Reload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1185, 12</value>
+    <value>1380, 13</value>
   </data>
   <data name="Button_Reload.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
@@ -223,6 +223,45 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Button_Reload.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="comboBox_tableName.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Yu Gothic UI, 16pt</value>
+  </data>
+  <data name="comboBox_tableName.Items" xml:space="preserve">
+    <value>basic</value>
+  </data>
+  <data name="comboBox_tableName.Items1" xml:space="preserve">
+    <value>basic + price</value>
+  </data>
+  <data name="comboBox_tableName.Items2" xml:space="preserve">
+    <value>basic + rental</value>
+  </data>
+  <data name="comboBox_tableName.Items3" xml:space="preserve">
+    <value>basic + price + purchase</value>
+  </data>
+  <data name="comboBox_tableName.Items4" xml:space="preserve">
+    <value>all information</value>
+  </data>
+  <data name="comboBox_tableName.Location" type="System.Drawing.Point, System.Drawing">
+    <value>549, 14</value>
+  </data>
+  <data name="comboBox_tableName.Size" type="System.Drawing.Size, System.Drawing">
+    <value>609, 67</value>
+  </data>
+  <data name="comboBox_tableName.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;comboBox_tableName.Name" xml:space="preserve">
+    <value>comboBox_tableName</value>
+  </data>
+  <data name="&gt;&gt;comboBox_tableName.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ComboBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;comboBox_tableName.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;comboBox_tableName.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

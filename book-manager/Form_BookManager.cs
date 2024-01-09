@@ -1,7 +1,5 @@
-using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.Windows.Forms;
 using System.Configuration;
 
 namespace book_manager
@@ -14,16 +12,17 @@ namespace book_manager
         public Form_BookManager()
         {
             InitializeComponent();
-            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString);
+            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableName);
             DisplayData();
-            dataGridView1.Columns["No"].ReadOnly = true;
+            dataGridView1.Columns["no"].ReadOnly = true;
+            comboBox_tableName.SelectedIndex = 0;
         }
 
         private void DisplayData()
         {
             try
             {
-                DataTable dataTable = databaseManager.SelectAllFromTable(tableName);
+                DataTable dataTable = databaseManager.SelectAllFromTable();
                 dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
@@ -61,49 +60,55 @@ namespace book_manager
 
             foreach (DataRow row in modifiedData.Rows)
             {
-                databaseManager.ManageRow(row, tableName);
+                databaseManager.ManageRow(row);
             }
             ((DataTable)dataGridView1.DataSource).AcceptChanges();
             MessageBox.Show("変更がデータベースに保存されました.");
+        }
+
+        private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 
     public class DatabaseManager
     {
         public readonly string ConnectionString;
+        private readonly string tableName;
 
-        public DatabaseManager(string connectionString)
+        public DatabaseManager(string connectionString, string tableName)
         {
-            this.ConnectionString = connectionString;
+            ConnectionString = connectionString;
+            this.tableName = tableName;
         }
 
-        public DataTable SelectAllFromTable(string tableName)
+        public DataTable SelectAllFromTable()
         {
             using SqlConnection connection = new(ConnectionString);
             using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableName}", connection);
-            DataTable dataTable = new();
+            using DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
         }
 
-        public void ManageRow(DataRow row, string tableName)
+        public void ManageRow(DataRow row)
         {
             using SqlConnection connection = new(ConnectionString);
-            connection.Open();
-
             using SqlCommand cmd = new(null, connection);
+            connection.Open();
             switch (row.RowState)
             {
                 case DataRowState.Added:
-                    ConfigureInsertCommand(cmd, row, tableName);
+                    ConfigureInsertCommand(cmd, row);
                     break;
 
                 case DataRowState.Modified:
-                    ConfigureUpdateCommand(cmd, row, tableName);
+                    ConfigureUpdateCommand(cmd, row);
                     break;
 
                 case DataRowState.Deleted:
-                    ConfigureDeleteCommand(cmd, row, tableName);
+                    ConfigureDeleteCommand(cmd, row);
                     break;
 
                 default:
@@ -113,8 +118,9 @@ namespace book_manager
             cmd.ExecuteNonQuery();
         }
 
-        private void ConfigureInsertCommand(SqlCommand cmd, DataRow row, string tableName)
+        private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
+            // no列は除外
             string[] columns = new string[row.ItemArray.Length - 1];
             string[] values = new string[row.ItemArray.Length - 1];
 
@@ -128,7 +134,7 @@ namespace book_manager
             cmd.CommandText = $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
         }
 
-        private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row, string tableName)
+        private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
             string[] setClauses = new string[row.ItemArray.Length - 1];
 
@@ -143,7 +149,7 @@ namespace book_manager
             cmd.CommandText = $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
         }
 
-        private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row, string tableName)
+        private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
             cmd.CommandText = $"DELETE FROM {tableName} WHERE id = @ParamID";
