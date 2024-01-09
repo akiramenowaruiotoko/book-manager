@@ -8,52 +8,23 @@ namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
-        private readonly DataManager formManager;
+        private readonly DatabaseManager databaseManager;
         private readonly string tableName = "basic_information";
 
         public Form_BookManager()
         {
             InitializeComponent();
-            formManager = new DataManager();
-            formManager.DisplayData(dataGridView1);
+            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString);
+            DisplayData();
             dataGridView1.Columns["No"].ReadOnly = true;
         }
 
-        private void Button_Reload_Click(object sender, EventArgs e)
-        {
-            formManager.DisplayData(dataGridView1);
-        }
-
-        private void Botton_Save_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                formManager.SaveChanges(dataGridView1, tableName);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
-            }
-        }
-    }
-
-    public class DataManager
-    {
-        private readonly DatabaseManager databaseManager;
-        private readonly string tableName = "basic_information";
-
-        public DataManager()
-        {
-            string connectionString = ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString;
-            databaseManager = new DatabaseManager(connectionString);
-        }
-
-        public void DisplayData(DataGridView dataGridView)
+        private void DisplayData()
         {
             try
             {
                 DataTable dataTable = databaseManager.SelectAllFromTable(tableName);
-                dataGridView.DataSource = dataTable;
+                dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
             {
@@ -61,23 +32,39 @@ namespace book_manager
             }
         }
 
-        public void SaveChanges(DataGridView dataGridView, string tableName)
+        private void Button_Reload_Click(object sender, EventArgs e)
         {
-            var modifiedData = ((DataTable)dataGridView.DataSource).GetChanges();
+            DisplayData();
+        }
 
-            if (modifiedData != null)
+        private void Botton_Save_Click(object sender, EventArgs e)
+        {
+            try
             {
-                foreach (DataRow row in modifiedData.Rows)
-                {
-                    databaseManager.ManageRow(row, tableName);
-                }
-                ((DataTable)dataGridView.DataSource).AcceptChanges();
-                MessageBox.Show("変更がデータベースに保存されました.");
+                SaveChanges();
             }
-            else
+            catch (Exception ex)
+            {
+                MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
+            }
+        }
+
+        private void SaveChanges()
+        {
+            var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
+
+            if (modifiedData == null)
             {
                 MessageBox.Show("変更がありません.");
+                return;
             }
+
+            foreach (DataRow row in modifiedData.Rows)
+            {
+                databaseManager.ManageRow(row, tableName);
+            }
+            ((DataTable)dataGridView1.DataSource).AcceptChanges();
+            MessageBox.Show("変更がデータベースに保存されました.");
         }
     }
 
@@ -92,41 +79,38 @@ namespace book_manager
 
         public DataTable SelectAllFromTable(string tableName)
         {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
+            using SqlConnection connection = new(ConnectionString);
             using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableName}", connection);
             DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
         }
+
         public void ManageRow(DataRow row, string tableName)
         {
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            using SqlConnection connection = new(ConnectionString);
+            connection.Open();
+
+            using SqlCommand cmd = new(null, connection);
+            switch (row.RowState)
             {
-                connection.Open();
+                case DataRowState.Added:
+                    ConfigureInsertCommand(cmd, row, tableName);
+                    break;
 
-                using (SqlCommand cmd = new SqlCommand(null, connection))
-                {
-                    switch (row.RowState)
-                    {
-                        case DataRowState.Added:
-                            ConfigureInsertCommand(cmd, row, tableName);
-                            break;
+                case DataRowState.Modified:
+                    ConfigureUpdateCommand(cmd, row, tableName);
+                    break;
 
-                        case DataRowState.Modified:
-                            ConfigureUpdateCommand(cmd, row, tableName);
-                            break;
+                case DataRowState.Deleted:
+                    ConfigureDeleteCommand(cmd, row, tableName);
+                    break;
 
-                        case DataRowState.Deleted:
-                            ConfigureDeleteCommand(cmd, row, tableName);
-                            break;
-
-                        default:
-                            // Handle other cases or throw an exception if needed
-                            throw new ArgumentException("Unsupported DataRowState");
-                    }
-                    cmd.ExecuteNonQuery();
-                }
+                default:
+                    // Handle other cases or throw an exception if needed
+                    throw new ArgumentException("Unsupported DataRowState");
             }
+            cmd.ExecuteNonQuery();
         }
 
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row, string tableName)
@@ -164,6 +148,5 @@ namespace book_manager
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
             cmd.CommandText = $"DELETE FROM {tableName} WHERE id = @ParamID";
         }
-
     }
 }
