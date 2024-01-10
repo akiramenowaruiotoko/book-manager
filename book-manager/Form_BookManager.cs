@@ -1,21 +1,48 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Text;
 
 namespace book_manager
 {
     public partial class Form_BookManager : Form
     {
         private readonly DatabaseManager databaseManager;
-        private readonly string tableName = "basic_information";
+        private readonly StringBuilder sql = new();
+        private readonly string[] tableNames = ["basic_information", "rental_information", "purchase_information"];
 
         public Form_BookManager()
         {
             InitializeComponent();
-            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableName);
+            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
             DisplayData();
             dataGridView1.Columns["no"].ReadOnly = true;
             comboBox_tableName.SelectedIndex = 0;
+        }
+
+        private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string? selectedTable = comboBox_tableName.SelectedItem!.ToString();
+            switch (selectedTable)
+            {
+                case "basic":
+                    break;
+                case "basic + price":
+                    break;
+                case "basic + rental":
+                    break;
+                case "basic + price + purchase":
+                    break;
+                case "all information":
+                    break;
+                default: throw new ArgumentException("Unsupported selectedTable");
+            }
+            sql.AppendLine("SELECT");
+
+        }
+        private void Button_Reload_Click(object sender, EventArgs e)
+        {
+            DisplayData();
         }
 
         private void DisplayData()
@@ -29,11 +56,6 @@ namespace book_manager
             {
                 MessageBox.Show("データの表示中にエラーが発生しました: " + ex.Message);
             }
-        }
-
-        private void Button_Reload_Click(object sender, EventArgs e)
-        {
-            DisplayData();
         }
 
         private void Botton_Save_Click(object sender, EventArgs e)
@@ -54,7 +76,7 @@ namespace book_manager
 
             if (modifiedData == null)
             {
-                MessageBox.Show("変更がありません.");
+                MessageBox.Show("変更がありません。");
                 return;
             }
 
@@ -63,30 +85,19 @@ namespace book_manager
                 databaseManager.ManageRow(row);
             }
             ((DataTable)dataGridView1.DataSource).AcceptChanges();
-            MessageBox.Show("変更がデータベースに保存されました.");
-        }
-
-        private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
+            MessageBox.Show("変更がデータベースに保存されました。");
         }
     }
 
-    public class DatabaseManager
+    public class DatabaseManager(string connectionString, string[] tableNames)
     {
-        public readonly string ConnectionString;
-        private readonly string tableName;
-
-        public DatabaseManager(string connectionString, string tableName)
-        {
-            ConnectionString = connectionString;
-            this.tableName = tableName;
-        }
+        public readonly string ConnectionString = connectionString;
+        private readonly string[] tableNames = tableNames;
 
         public DataTable SelectAllFromTable()
         {
             using SqlConnection connection = new(ConnectionString);
-            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableName}", connection);
+            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableNames[0]}", connection);
             using DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
@@ -131,7 +142,7 @@ namespace book_manager
                 cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
             }
 
-            cmd.CommandText = $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+            cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
         }
 
         private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
@@ -146,13 +157,13 @@ namespace book_manager
 
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
-            cmd.CommandText = $"UPDATE {tableName} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+            cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
         }
 
         private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
-            cmd.CommandText = $"DELETE FROM {tableName} WHERE id = @ParamID";
+            cmd.CommandText = $"DELETE FROM {tableNames[0]} WHERE id = @ParamID";
         }
     }
 }

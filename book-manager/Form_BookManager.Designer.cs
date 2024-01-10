@@ -67,6 +67,7 @@
             // 
             // comboBox_tableName
             // 
+            comboBox_tableName.DropDownStyle = ComboBoxStyle.DropDownList;
             resources.ApplyResources(comboBox_tableName, "comboBox_tableName");
             comboBox_tableName.FormattingEnabled = true;
             comboBox_tableName.Items.AddRange(new object[] { resources.GetString("comboBox_tableName.Items"), resources.GetString("comboBox_tableName.Items1"), resources.GetString("comboBox_tableName.Items2"), resources.GetString("comboBox_tableName.Items3"), resources.GetString("comboBox_tableName.Items4") });
