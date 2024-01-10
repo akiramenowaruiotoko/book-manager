@@ -15,19 +15,53 @@ namespace book_manager
         {
             InitializeComponent();
             databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
+            comboBox_tableName.SelectedIndex = 0;
+
+            sql.AppendLine("SELECT");
+            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
+            sql.AppendLine("id,");
+            sql.AppendLine("book_name,");
+            sql.AppendLine("subtitle,");
+            sql.AppendLine("author_name,");
+            sql.AppendLine("division,");
+            sql.AppendLine("recommended_target");
+            sql.AppendLine("FROM");
+            sql.AppendLine(tableNames[0]);
+
             DisplayData();
             dataGridView1.Columns["no"].ReadOnly = true;
-            comboBox_tableName.SelectedIndex = 0;
         }
 
         private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
         {
+            sql.Clear();
             string? selectedTable = comboBox_tableName.SelectedItem!.ToString();
             switch (selectedTable)
             {
                 case "basic":
+                    sql.AppendLine("SELECT");
+                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
+                    sql.AppendLine("id,");
+                    sql.AppendLine("book_name,");
+                    sql.AppendLine("subtitle,");
+                    sql.AppendLine("author_name,");
+                    sql.AppendLine("division,");
+                    sql.AppendLine("recommended_target");
+                    sql.AppendLine("FROM");
+                    sql.AppendLine(tableNames[0]);
                     break;
                 case "basic + price":
+                    sql.AppendLine("SELECT");
+                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
+                    sql.AppendLine("id,");
+                    sql.AppendLine("book_name,");
+                    sql.AppendLine("subtitle,");
+                    sql.AppendLine("author_name,");
+                    sql.AppendLine("division,");
+                    sql.AppendLine("recommended_target,");
+                    sql.AppendLine("price");
+                    sql.AppendLine("FROM");
+                    sql.AppendLine(tableNames[0]);
                     break;
                 case "basic + rental":
                     break;
@@ -37,9 +71,8 @@ namespace book_manager
                     break;
                 default: throw new ArgumentException("Unsupported selectedTable");
             }
-            sql.AppendLine("SELECT");
-
         }
+
         private void Button_Reload_Click(object sender, EventArgs e)
         {
             DisplayData();
@@ -49,7 +82,7 @@ namespace book_manager
         {
             try
             {
-                DataTable dataTable = databaseManager.SelectAllFromTable();
+                DataTable dataTable = databaseManager.SelectFromTable(sql.ToString());
                 dataGridView1.DataSource = dataTable;
             }
             catch (Exception ex)
@@ -94,10 +127,11 @@ namespace book_manager
         public readonly string ConnectionString = connectionString;
         private readonly string[] tableNames = tableNames;
 
-        public DataTable SelectAllFromTable()
+
+        public DataTable SelectFromTable(string sql)
         {
             using SqlConnection connection = new(ConnectionString);
-            using SqlDataAdapter adapter = new($"SELECT ROW_NUMBER() OVER(ORDER BY id ASC) No, * FROM {tableNames[0]}", connection);
+            using SqlDataAdapter adapter = new(sql.ToString(), connection);
             using DataTable dataTable = new();
             adapter.Fill(dataTable);
             return dataTable;
