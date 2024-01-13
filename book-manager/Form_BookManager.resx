@@ -126,7 +126,7 @@
     <value>82</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1755, 549</value>
+    <value>2300, 549</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -247,7 +247,7 @@
     <value>549, 14</value>
   </data>
   <data name="comboBox_tableName.Size" type="System.Drawing.Size, System.Drawing">
-    <value>609, 67</value>
+    <value>807, 67</value>
   </data>
   <data name="comboBox_tableName.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -274,7 +274,7 @@
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1780, 919</value>
+    <value>2325, 919</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>BookManager</value>

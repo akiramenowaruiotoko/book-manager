@@ -10,87 +10,101 @@ namespace book_manager
     {
         private readonly DatabaseManager databaseManager;
         private readonly StringBuilder sql = new();
-        private readonly string[] tableNames = ["basic_information", "rental_information", "purchase_information"];
-         
+        private readonly string[] tableNames = { "basic_information", "rental_information", "purchase_information" };
+
         public Form_BookManager()
         {
             InitializeComponent();
             databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
-            sql = new StringBuilder();
             comboBox_tableName.SelectedIndex = 0;
 
-            sql.AppendLine("SELECT");
-            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
-            sql.AppendLine("id,");
-            sql.AppendLine("book_name,");
-            sql.AppendLine("subtitle,");
-            sql.AppendLine("author_name,");
-            sql.AppendLine("division,");
-            sql.AppendLine("recommended_target");
+            BuildBaseQuery();
             sql.AppendLine("FROM");
-            sql.AppendLine(tableNames[0]);
-
+            sql.AppendLine(tableNames[0] + " as b");
             DisplayData();
             dataGridView1.Columns["no"].ReadOnly = true;
         }
 
-
+        private void BuildBaseQuery()
+        {
+            sql.Clear();
+            sql.AppendLine("SELECT");
+            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY b.id ASC) No,");
+            sql.AppendLine("b.id,");
+            sql.AppendLine("b.book_name,");
+            sql.AppendLine("b.subtitle,");
+            sql.AppendLine("b.author_name,");
+            sql.AppendLine("b.division,");
+            sql.AppendLine("b.recommended_target");
+        }
 
         private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
         {
             sql.Clear();
-            string? selectedTable = comboBox_tableName.SelectedItem!.ToString();
+            string? selectedTable = comboBox_tableName.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(selectedTable))
+            {
+                // Handle invalid selection
+                return;
+            }
+
             switch (selectedTable)
             {
                 case "basic":
-                    sql.AppendLine("SELECT");
-                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
-                    sql.AppendLine("id,");
-                    sql.AppendLine("book_name,");
-                    sql.AppendLine("subtitle,");
-                    sql.AppendLine("author_name,");
-                    sql.AppendLine("division,");
-                    sql.AppendLine("recommended_target");
+                    BuildBaseQuery();
                     sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0]);
+                    sql.AppendLine(tableNames[0] + " as b");
                     break;
                 case "basic + price":
-                    sql.AppendLine("SELECT");
-                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
-                    sql.AppendLine("id,");
-                    sql.AppendLine("book_name,");
-                    sql.AppendLine("subtitle,");
-                    sql.AppendLine("author_name,");
-                    sql.AppendLine("division,");
-                    sql.AppendLine("recommended_target,");
-                    sql.AppendLine("price");
+                    BuildBaseQuery();
+                    sql.AppendLine(", price");
                     sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0]);
+                    sql.AppendLine(tableNames[0] + " as b");
                     break;
                 case "basic + rental":
-                    sql.AppendLine("SELECT");
-                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
-                    sql.AppendLine("b.id,");
-                    sql.AppendLine("b.book_name,");
-                    sql.AppendLine("b.subtitle,");
-                    sql.AppendLine("b.author_name,");
-                    sql.AppendLine("b.division,");
-                    sql.AppendLine("b.recommended_target");
-                    sql.AppendLine("r.name");
-                    sql.AppendLine("r.affiliation");
-                    sql.AppendLine("r.loan_date");
-                    sql.AppendLine("r.return_date");
+                    BuildBaseQuery();
+                    sql.AppendLine(", r.name");
+                    sql.AppendLine(", r.affiliation");
+                    sql.AppendLine(", r.loan_date");
+                    sql.AppendLine(", r.return_date");
                     sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + "as  b");
-                    sql.AppendLine("left join");
-                    sql.AppendLine(tableNames[1] + "as  r");
+                    sql.AppendLine(tableNames[0] + " as b");
+                    sql.AppendLine("LEFT JOIN");
+                    sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
                     break;
                 case "basic + price + purchase":
-
+                    BuildBaseQuery();
+                    sql.AppendLine(", price");
+                    sql.AppendLine(", p.name");
+                    sql.AppendLine(", p.affiliation");
+                    sql.AppendLine(", p.possiblility_of_purchase");
+                    sql.AppendLine(", p.notes");
+                    sql.AppendLine("FROM");
+                    sql.AppendLine(tableNames[0] + " as b");
+                    sql.AppendLine("LEFT JOIN");
+                    sql.AppendLine(tableNames[2] + " as p ON b.id = p.id");
                     break;
                 case "all information":
+                    BuildBaseQuery();
+                    sql.AppendLine(", price");
+                    sql.AppendLine(", r.name");
+                    sql.AppendLine(", r.affiliation");
+                    sql.AppendLine(", r.loan_date");
+                    sql.AppendLine(", r.return_date");
+                    sql.AppendLine(", p.name");
+                    sql.AppendLine(", p.affiliation");
+                    sql.AppendLine(", p.possiblility_of_purchase");
+                    sql.AppendLine(", p.notes");
+                    sql.AppendLine("FROM");
+                    sql.AppendLine(tableNames[0] + " as b");
+                    sql.AppendLine("LEFT JOIN");
+                    sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
+                    sql.AppendLine("LEFT JOIN");
+                    sql.AppendLine(tableNames[2] + " as p ON b.id = p.id");
+
                     break;
-                default: throw new ArgumentException("Unsupported selectedTable");
+                default:
+                    throw new ArgumentException("Unsupported selectedTable");
             }
         }
 
@@ -142,6 +156,7 @@ namespace book_manager
             MessageBox.Show("変更がデータベースに保存されました。");
         }
     }
+
 
     public class DatabaseManager(string connectionString, string[] tableNames)
     {
