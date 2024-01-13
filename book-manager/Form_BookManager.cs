@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
+using System.Xml.Linq;
 
 namespace book_manager
 {
@@ -10,11 +11,12 @@ namespace book_manager
         private readonly DatabaseManager databaseManager;
         private readonly StringBuilder sql = new();
         private readonly string[] tableNames = ["basic_information", "rental_information", "purchase_information"];
-
+         
         public Form_BookManager()
         {
             InitializeComponent();
             databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
+            sql = new StringBuilder();
             comboBox_tableName.SelectedIndex = 0;
 
             sql.AppendLine("SELECT");
@@ -31,6 +33,8 @@ namespace book_manager
             DisplayData();
             dataGridView1.Columns["no"].ReadOnly = true;
         }
+
+
 
         private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -64,8 +68,25 @@ namespace book_manager
                     sql.AppendLine(tableNames[0]);
                     break;
                 case "basic + rental":
+                    sql.AppendLine("SELECT");
+                    sql.AppendLine("ROW_NUMBER() OVER(ORDER BY id ASC) No,");
+                    sql.AppendLine("b.id,");
+                    sql.AppendLine("b.book_name,");
+                    sql.AppendLine("b.subtitle,");
+                    sql.AppendLine("b.author_name,");
+                    sql.AppendLine("b.division,");
+                    sql.AppendLine("b.recommended_target");
+                    sql.AppendLine("r.name");
+                    sql.AppendLine("r.affiliation");
+                    sql.AppendLine("r.loan_date");
+                    sql.AppendLine("r.return_date");
+                    sql.AppendLine("FROM");
+                    sql.AppendLine(tableNames[0] + "as  b");
+                    sql.AppendLine("left join");
+                    sql.AppendLine(tableNames[1] + "as  r");
                     break;
                 case "basic + price + purchase":
+
                     break;
                 case "all information":
                     break;
