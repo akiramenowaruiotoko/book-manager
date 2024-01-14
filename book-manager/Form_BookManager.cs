@@ -1,8 +1,9 @@
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
-using System.Xml.Linq;
+using System.Windows.Forms;
 
 namespace book_manager
 {
@@ -22,7 +23,7 @@ namespace book_manager
             sql.AppendLine("FROM");
             sql.AppendLine(tableNames[0] + " as b");
             DisplayData();
-            dataGridView1.Columns["no"].ReadOnly = true;
+            dataGridView1.Columns["No"].ReadOnly = true; // Fix: Correct column name
         }
 
         private void BuildBaseQuery()
@@ -77,7 +78,7 @@ namespace book_manager
                     sql.AppendLine(", price");
                     sql.AppendLine(", p.name");
                     sql.AppendLine(", p.affiliation");
-                    sql.AppendLine(", p.possiblility_of_purchase");
+                    sql.AppendLine(", p.possibility_of_purchase");
                     sql.AppendLine(", p.notes");
                     sql.AppendLine("FROM");
                     sql.AppendLine(tableNames[0] + " as b");
@@ -93,7 +94,7 @@ namespace book_manager
                     sql.AppendLine(", r.return_date");
                     sql.AppendLine(", p.name");
                     sql.AppendLine(", p.affiliation");
-                    sql.AppendLine(", p.possiblility_of_purchase");
+                    sql.AppendLine(", p.possibility_of_purchase");
                     sql.AppendLine(", p.notes");
                     sql.AppendLine("FROM");
                     sql.AppendLine(tableNames[0] + " as b");
@@ -101,12 +102,12 @@ namespace book_manager
                     sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
                     sql.AppendLine("LEFT JOIN");
                     sql.AppendLine(tableNames[2] + " as p ON b.id = p.id");
-
                     break;
                 default:
                     throw new ArgumentException("Unsupported selectedTable");
             }
         }
+
 
         private void Button_Reload_Click(object sender, EventArgs e)
         {
@@ -126,7 +127,7 @@ namespace book_manager
             }
         }
 
-        private void Botton_Save_Click(object sender, EventArgs e)
+        private void Button_Save_Click(object sender, EventArgs e)
         {
             try
             {
@@ -157,12 +158,16 @@ namespace book_manager
         }
     }
 
-
-    public class DatabaseManager(string connectionString, string[] tableNames)
+    public class DatabaseManager
     {
-        public readonly string ConnectionString = connectionString;
-        private readonly string[] tableNames = tableNames;
+        public readonly string ConnectionString;
+        private readonly string[] tableNames;
 
+        public DatabaseManager(string connectionString, string[] tableNames)
+        {
+            ConnectionString = connectionString;
+            this.tableNames = tableNames;
+        }
 
         public DataTable SelectFromTable(string sql)
         {
@@ -201,7 +206,6 @@ namespace book_manager
 
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
-            // noóÒÇÕèúäO
             string[] columns = new string[row.ItemArray.Length - 1];
             string[] values = new string[row.ItemArray.Length - 1];
 

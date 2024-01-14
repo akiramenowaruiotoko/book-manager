@@ -56,7 +56,7 @@
             resources.ApplyResources(Button_Save, "Button_Save");
             Button_Save.Name = "Button_Save";
             Button_Save.UseVisualStyleBackColor = true;
-            Button_Save.Click += Botton_Save_Click;
+            Button_Save.Click += Button_Save_Click;
             // 
             // Button_Reload
             // 
