@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace book_manager
 {
@@ -11,7 +12,7 @@ namespace book_manager
     {
         private readonly DatabaseManager databaseManager;
         private readonly StringBuilder sql = new();
-        private readonly string[] tableNames = { "basic_information", "rental_information", "purchase_information" };
+        private readonly string[] tableNames = { "basic_information", "rental_information"};
 
         public Form_BookManager()
         {
@@ -30,13 +31,10 @@ namespace book_manager
         {
             sql.Clear();
             sql.AppendLine("SELECT");
-            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY b.id ASC) No,");
-            sql.AppendLine("b.id,");
-            sql.AppendLine("b.book_name,");
-            sql.AppendLine("b.subtitle,");
-            sql.AppendLine("b.author_name,");
-            sql.AppendLine("b.division,");
-            sql.AppendLine("b.recommended_target");
+            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY b.id ASC) No");
+            sql.AppendLine(", b.id");
+            sql.AppendLine(", b.book_name");
+            sql.AppendLine(", price");
         }
 
         private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
@@ -56,58 +54,20 @@ namespace book_manager
                     sql.AppendLine("FROM");
                     sql.AppendLine(tableNames[0] + " as b");
                     break;
-                case "basic + price":
-                    BuildBaseQuery();
-                    sql.AppendLine(", price");
-                    sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + " as b");
-                    break;
                 case "basic + rental":
                     BuildBaseQuery();
                     sql.AppendLine(", r.name");
-                    sql.AppendLine(", r.affiliation");
                     sql.AppendLine(", r.loan_date");
-                    sql.AppendLine(", r.return_date");
                     sql.AppendLine("FROM");
                     sql.AppendLine(tableNames[0] + " as b");
                     sql.AppendLine("LEFT JOIN");
                     sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
                     break;
-                case "basic + price + purchase":
-                    BuildBaseQuery();
-                    sql.AppendLine(", price");
-                    sql.AppendLine(", p.name");
-                    sql.AppendLine(", p.affiliation");
-                    sql.AppendLine(", p.possibility_of_purchase");
-                    sql.AppendLine(", p.notes");
-                    sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + " as b");
-                    sql.AppendLine("LEFT JOIN");
-                    sql.AppendLine(tableNames[2] + " as p ON b.id = p.id");
-                    break;
-                case "all information":
-                    BuildBaseQuery();
-                    sql.AppendLine(", price");
-                    sql.AppendLine(", r.name");
-                    sql.AppendLine(", r.affiliation");
-                    sql.AppendLine(", r.loan_date");
-                    sql.AppendLine(", r.return_date");
-                    sql.AppendLine(", p.name");
-                    sql.AppendLine(", p.affiliation");
-                    sql.AppendLine(", p.possibility_of_purchase");
-                    sql.AppendLine(", p.notes");
-                    sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + " as b");
-                    sql.AppendLine("LEFT JOIN");
-                    sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
-                    sql.AppendLine("LEFT JOIN");
-                    sql.AppendLine(tableNames[2] + " as p ON b.id = p.id");
-                    break;
-                default:
+                 default:
                     throw new ArgumentException("Unsupported selectedTable");
             }
+            DisplayData();
         }
-
 
         private void Button_Reload_Click(object sender, EventArgs e)
         {
@@ -201,7 +161,6 @@ namespace book_manager
                     // Handle other cases or throw an exception if needed
                     throw new ArgumentException("Unsupported DataRowState");
             }
-            cmd.ExecuteNonQuery();
         }
 
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
@@ -221,17 +180,50 @@ namespace book_manager
 
         private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
-            string[] setClauses = new string[row.ItemArray.Length - 1];
+            string[] setClauses = new string[row.ItemArray.Length - 3];
+                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
-            for (int i = 0; i < row.ItemArray.Length - 1; i++)
+            // basic + rental
+            if ( row.ItemArray.Length == 6)
             {
-                setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
-                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                for (int i = 0; i < row.ItemArray.Length - 3; i++)
+                {
+                    setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
+                    cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                }
+                cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+                cmd.ExecuteNonQuery();
+
+                // reset
+                setClauses = new string[row.ItemArray.Length - 3];
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    if (i == 0)
+                    {
+                        setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
+                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                    }else if(i >= 3)
+                    {
+                        setClauses[i-2] = $"{row.Table.Columns[i+1].ColumnName} = @Param{i-2}";
+                        cmd.Parameters.AddWithValue($"@Param{i-2}", row[i+1]);
+                    }
+                }
+                cmd.CommandText = $"UPDATE {tableNames[1]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+                cmd.ExecuteNonQuery();
             }
-
-            cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
-
-            cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+            else
+            {
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
+                    cmd.Parameters.AddWithValue($"@Param_b{i}", row[i + 1]);
+                }
+                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+                cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row)

@@ -119,14 +119,14 @@
   </resheader>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="dataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>13, 97</value>
+    <value>12, 166</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="dataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>82</value>
   </data>
   <data name="dataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>2300, 549</value>
+    <value>1227, 549</value>
   </data>
   <data name="dataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -174,7 +174,7 @@
     <value>3</value>
   </data>
   <data name="Button_Save.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1577, 12</value>
+    <value>844, 92</value>
   </data>
   <data name="Button_Save.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
@@ -202,7 +202,7 @@
     <value>NoControl</value>
   </data>
   <data name="Button_Reload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1380, 13</value>
+    <value>549, 87</value>
   </data>
   <data name="Button_Reload.Size" type="System.Drawing.Size, System.Drawing">
     <value>191, 68</value>
@@ -232,22 +232,13 @@
     <value>basic</value>
   </data>
   <data name="comboBox_tableName.Items1" xml:space="preserve">
-    <value>basic + price</value>
-  </data>
-  <data name="comboBox_tableName.Items2" xml:space="preserve">
     <value>basic + rental</value>
-  </data>
-  <data name="comboBox_tableName.Items3" xml:space="preserve">
-    <value>basic + price + purchase</value>
-  </data>
-  <data name="comboBox_tableName.Items4" xml:space="preserve">
-    <value>all information</value>
   </data>
   <data name="comboBox_tableName.Location" type="System.Drawing.Point, System.Drawing">
     <value>549, 14</value>
   </data>
   <data name="comboBox_tableName.Size" type="System.Drawing.Size, System.Drawing">
-    <value>807, 67</value>
+    <value>486, 67</value>
   </data>
   <data name="comboBox_tableName.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
@@ -274,7 +265,7 @@
     <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>2325, 919</value>
+    <value>1286, 919</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>BookManager</value>
