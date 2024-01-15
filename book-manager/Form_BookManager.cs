@@ -1,4 +1,3 @@
-using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
@@ -22,7 +21,7 @@ namespace book_manager
             sql.AppendLine("FROM");
             sql.AppendLine(tableNames[0] + " as b");
             DisplayData();
-            dataGridView1.Columns["No"].ReadOnly = true; // Fix: Correct column name
+            dataGridView1.Columns["No"].ReadOnly = true;
         }
 
         private void BuildBaseQuery()
@@ -167,11 +166,49 @@ namespace book_manager
             string[] columns = new string[row.ItemArray.Length - 1];
             string[] values = new string[row.ItemArray.Length - 1];
 
-            // basic + rental
-            if (row.ItemArray.Length == 6)
+            // basic only
+            if (row.ItemArray.Length == 4)
             {
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    columns[i] = row.Table.Columns[i + 1].ColumnName;
+                    values[i] = $"@Param{i}";
+                    cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                }
+                cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+                cmd.ExecuteNonQuery();
+            }
+            // basic + rental
+            else
+            {
+                cmd.Parameters.Clear();
                 columns = new string[row.ItemArray.Length - 3];
                 values = new string[row.ItemArray.Length - 3];
+
+                // basic
+                if (row.RowState == DataRowState.Added)
+                {
+                    for (int i = 0; i < row.ItemArray.Length - 3; i++)
+                    {
+                        columns[i] = row.Table.Columns[i + 1].ColumnName;
+                        values[i] = $"@Param{i}";
+                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                    }
+                    cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+                    cmd.ExecuteNonQuery();
+                }
+
+                // rental data exist check
+                if ((row["name"] == DBNull.Value))
+                {
+                    return;
+                }
+
+                // rental
+                cmd.Parameters.Clear();
+                columns = new string[row.ItemArray.Length - 3];
+                values = new string[row.ItemArray.Length - 3];
+
                 for (int i = 0; i < row.ItemArray.Length - 1; i++)
                 {
                     if (i == 0)
@@ -187,17 +224,6 @@ namespace book_manager
                     }
                 }
                 cmd.CommandText = $"INSERT INTO {tableNames[1]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
-                cmd.ExecuteNonQuery();
-            }
-            else
-            {
-                for (int i = 0; i < row.ItemArray.Length - 1; i++)
-                {
-                    columns[i] = row.Table.Columns[i + 1].ColumnName;
-                    values[i] = $"@Param{i}";
-                    cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
-                }
-                cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
                 cmd.ExecuteNonQuery();
             }
         }
@@ -225,6 +251,12 @@ namespace book_manager
                 {
                     // insert rental
                     ConfigureInsertCommand(cmd, row);
+                }
+                // rental delete check
+                else if (row["name"] == DBNull.Value )
+                {
+                    cmd.CommandText = $"DELETE FROM {tableNames[1]} WHERE id = @ParamID";
+                    cmd.ExecuteNonQuery();
                 }
                 else
                 {
@@ -261,10 +293,16 @@ namespace book_manager
                 cmd.ExecuteNonQuery();
             }
         }
+
         private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+            
+            cmd.CommandText = $"DELETE FROM {tableNames[1]} WHERE id = @ParamID";
+            cmd.ExecuteNonQuery();
+
             cmd.CommandText = $"DELETE FROM {tableNames[0]} WHERE id = @ParamID";
+            cmd.ExecuteNonQuery();
         }
     }
 }
