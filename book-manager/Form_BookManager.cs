@@ -3,8 +3,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
-using System.Windows.Forms;
-using System.Diagnostics;
 
 namespace book_manager
 {
@@ -165,27 +163,55 @@ namespace book_manager
 
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
+            cmd.Parameters.Clear();
             string[] columns = new string[row.ItemArray.Length - 1];
             string[] values = new string[row.ItemArray.Length - 1];
 
-            for (int i = 0; i < row.ItemArray.Length - 1; i++)
+            // basic + rental
+            if (row.ItemArray.Length == 6)
             {
-                columns[i] = row.Table.Columns[i + 1].ColumnName;
-                values[i] = $"@Param{i}";
-                cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                columns = new string[row.ItemArray.Length - 3];
+                values = new string[row.ItemArray.Length - 3];
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    if (i == 0)
+                    {
+                        columns[i] = row.Table.Columns[i + 1].ColumnName;
+                        values[i] = $"@Param{i}";
+                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                    }else if(i >= 3)
+                    {
+                        columns[i-2] = row.Table.Columns[i + 1].ColumnName;
+                        values[i-2] = $"@Param{i-2}";
+                        cmd.Parameters.AddWithValue($"@Param{i-2}", row[i + 1]);
+                    }
+                }
+                cmd.CommandText = $"INSERT INTO {tableNames[1]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+                cmd.ExecuteNonQuery();
             }
-
-            cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+            else
+            {
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    columns[i] = row.Table.Columns[i + 1].ColumnName;
+                    values[i] = $"@Param{i}";
+                    cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                }
+                cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
-            string[] setClauses = new string[row.ItemArray.Length - 3];
-                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+            string[] setClauses = new string[row.ItemArray.Length - 1];
+            cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
             // basic + rental
             if ( row.ItemArray.Length == 6)
             {
+                setClauses = new string[row.ItemArray.Length - 3];
+                // basic
                 for (int i = 0; i < row.ItemArray.Length - 3; i++)
                 {
                     setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
@@ -194,38 +220,47 @@ namespace book_manager
                 cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
                 cmd.ExecuteNonQuery();
 
-                // reset
-                setClauses = new string[row.ItemArray.Length - 3];
-                cmd.Parameters.Clear();
-                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
-                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                // rental exist check
+                if ((row["name", DataRowVersion.Original] == DBNull.Value) && (row["loan_date", DataRowVersion.Original] == DBNull.Value))
                 {
-                    if (i == 0)
-                    {
-                        setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
-                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
-                    }else if(i >= 3)
-                    {
-                        setClauses[i-2] = $"{row.Table.Columns[i+1].ColumnName} = @Param{i-2}";
-                        cmd.Parameters.AddWithValue($"@Param{i-2}", row[i+1]);
-                    }
+                    // insert rental
+                    ConfigureInsertCommand(cmd, row);
                 }
-                cmd.CommandText = $"UPDATE {tableNames[1]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
-                cmd.ExecuteNonQuery();
+                else
+                {
+                    // reset
+                    setClauses = new string[row.ItemArray.Length - 3];
+                    cmd.Parameters.Clear();
+
+                    // rental
+                    cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
+                    for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                    {
+                        if (i == 0)
+                        {
+                            setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
+                            cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                        }else if(i >= 3)
+                        {
+                            setClauses[i-2] = $"{row.Table.Columns[i+1].ColumnName} = @Param{i-2}";
+                            cmd.Parameters.AddWithValue($"@Param{i-2}", row[i+1]);
+                        }
+                    }
+                    cmd.CommandText = $"UPDATE {tableNames[1]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
+                    cmd.ExecuteNonQuery();
+                }
             }
             else
             {
                 for (int i = 0; i < row.ItemArray.Length - 1; i++)
                 {
                     setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
-                    cmd.Parameters.AddWithValue($"@Param_b{i}", row[i + 1]);
+                    cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
                 }
-                cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
                 cmd.CommandText = $"UPDATE {tableNames[0]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
                 cmd.ExecuteNonQuery();
             }
         }
-
         private void ConfigureDeleteCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
