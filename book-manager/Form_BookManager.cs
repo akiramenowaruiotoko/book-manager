@@ -1,7 +1,9 @@
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Text;
+using System.Windows.Forms;
 
 namespace book_manager
 {
@@ -9,7 +11,7 @@ namespace book_manager
     {
         private readonly DatabaseManager databaseManager;
         private readonly StringBuilder sql = new();
-        private readonly string[] tableNames = { "basic_information", "rental_information"};
+        private readonly string[] tableNames = { "basic_information", "rental_information" };
 
         public Form_BookManager()
         {
@@ -17,6 +19,11 @@ namespace book_manager
             databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
             comboBox_tableName.SelectedIndex = 0;
 
+            Initialize();
+        }
+
+        private void Initialize()
+        {
             BuildBaseQuery();
             sql.AppendLine("FROM");
             sql.AppendLine(tableNames[0] + " as b");
@@ -60,7 +67,7 @@ namespace book_manager
                     sql.AppendLine("LEFT JOIN");
                     sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
                     break;
-                 default:
+                default:
                     throw new ArgumentException("Unsupported selectedTable");
             }
             DisplayData();
@@ -98,21 +105,34 @@ namespace book_manager
 
         private void SaveChanges()
         {
-            var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
-
-            if (modifiedData == null)
+            try
             {
-                MessageBox.Show("変更がありません。");
-                return;
-            }
+                var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
 
+                if (modifiedData == null)
+                {
+                    MessageBox.Show("変更がありません。");
+                    return;
+                }
+
+                ProcessModifiedData(modifiedData);
+                ((DataTable)dataGridView1.DataSource).AcceptChanges();
+                MessageBox.Show("変更がデータベースに保存されました。");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("データベースへの保存中にエラーが発生しました: " + ex.Message);
+            }
+        }
+
+        private void ProcessModifiedData(DataTable modifiedData)
+        {
             foreach (DataRow row in modifiedData.Rows)
             {
                 databaseManager.ManageRow(row);
             }
-            ((DataTable)dataGridView1.DataSource).AcceptChanges();
-            MessageBox.Show("変更がデータベースに保存されました。");
         }
+
     }
 
     public class DatabaseManager
@@ -128,17 +148,17 @@ namespace book_manager
 
         public DataTable SelectFromTable(string sql)
         {
-            using SqlConnection connection = new(ConnectionString);
-            using SqlDataAdapter adapter = new(sql.ToString(), connection);
-            using DataTable dataTable = new();
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            using SqlDataAdapter adapter = new SqlDataAdapter(sql, connection);
+            using DataTable dataTable = new DataTable();
             adapter.Fill(dataTable);
             return dataTable;
         }
 
         public void ManageRow(DataRow row)
         {
-            using SqlConnection connection = new(ConnectionString);
-            using SqlCommand cmd = new(null, connection);
+            using SqlConnection connection = new SqlConnection(ConnectionString);
+            using SqlCommand cmd = new SqlCommand(null, connection);
             connection.Open();
             switch (row.RowState)
             {
@@ -163,12 +183,15 @@ namespace book_manager
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.Clear();
-            string[] columns = new string[row.ItemArray.Length - 1];
-            string[] values = new string[row.ItemArray.Length - 1];
+            string[] columns;
+            string[] values;
 
             // basic only
             if (row.ItemArray.Length == 4)
             {
+                columns = new string[row.ItemArray.Length - 1];
+                values = new string[row.ItemArray.Length - 1];
+
                 for (int i = 0; i < row.ItemArray.Length - 1; i++)
                 {
                     columns[i] = row.Table.Columns[i + 1].ColumnName;
@@ -181,7 +204,6 @@ namespace book_manager
             // basic + rental
             else
             {
-                cmd.Parameters.Clear();
                 columns = new string[row.ItemArray.Length - 3];
                 values = new string[row.ItemArray.Length - 3];
 
@@ -199,7 +221,7 @@ namespace book_manager
                 }
 
                 // rental data exist check
-                if ((row["name"] == DBNull.Value))
+                if (row["name"] == DBNull.Value)
                 {
                     return;
                 }
@@ -216,11 +238,12 @@ namespace book_manager
                         columns[i] = row.Table.Columns[i + 1].ColumnName;
                         values[i] = $"@Param{i}";
                         cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
-                    }else if(i >= 3)
+                    }
+                    else if (i >= 3)
                     {
-                        columns[i-2] = row.Table.Columns[i + 1].ColumnName;
-                        values[i-2] = $"@Param{i-2}";
-                        cmd.Parameters.AddWithValue($"@Param{i-2}", row[i + 1]);
+                        columns[i - 2] = row.Table.Columns[i + 1].ColumnName;
+                        values[i - 2] = $"@Param{i - 2}";
+                        cmd.Parameters.AddWithValue($"@Param{i - 2}", row[i + 1]);
                     }
                 }
                 cmd.CommandText = $"INSERT INTO {tableNames[1]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
@@ -230,11 +253,11 @@ namespace book_manager
 
         private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
-            string[] setClauses = new string[row.ItemArray.Length - 1];
+            string[] setClauses;
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
             // basic + rental
-            if ( row.ItemArray.Length == 6)
+            if (row.ItemArray.Length == 6)
             {
                 setClauses = new string[row.ItemArray.Length - 3];
                 // basic
@@ -253,7 +276,7 @@ namespace book_manager
                     ConfigureInsertCommand(cmd, row);
                 }
                 // rental delete check
-                else if (row["name"] == DBNull.Value )
+                else if (row["name"] == DBNull.Value)
                 {
                     cmd.CommandText = $"DELETE FROM {tableNames[1]} WHERE id = @ParamID";
                     cmd.ExecuteNonQuery();
@@ -272,10 +295,11 @@ namespace book_manager
                         {
                             setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
                             cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
-                        }else if(i >= 3)
+                        }
+                        else if (i >= 3)
                         {
-                            setClauses[i-2] = $"{row.Table.Columns[i+1].ColumnName} = @Param{i-2}";
-                            cmd.Parameters.AddWithValue($"@Param{i-2}", row[i+1]);
+                            setClauses[i - 2] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i - 2}";
+                            cmd.Parameters.AddWithValue($"@Param{i - 2}", row[i + 1]);
                         }
                     }
                     cmd.CommandText = $"UPDATE {tableNames[1]} SET {string.Join(", ", setClauses)} WHERE id = @ParamID";
@@ -284,6 +308,7 @@ namespace book_manager
             }
             else
             {
+                setClauses = new string[row.ItemArray.Length - 1];
                 for (int i = 0; i < row.ItemArray.Length - 1; i++)
                 {
                     setClauses[i] = $"{row.Table.Columns[i + 1].ColumnName} = @Param{i}";
