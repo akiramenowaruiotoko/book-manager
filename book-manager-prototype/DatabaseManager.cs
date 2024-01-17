@@ -1,162 +1,13 @@
-using System;
-using System.Data;
+ï»¿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Configuration;
+using System.Data;
+using System.Linq;
 using System.Text;
-using System.Windows.Forms;
+using System.Threading.Tasks;
 
 namespace book_manager
 {
-    public partial class Form_BookManager : Form
-    {
-        private readonly DatabaseManager databaseManager;
-        private readonly StringBuilder sql = new();
-        private readonly string[] tableNames = { "basic_information", "rental_information" };
-
-        public Form_BookManager()
-        {
-            InitializeComponent();
-            // ƒf[ƒ^ƒx[ƒXƒ}ƒl[ƒWƒƒ[‚Ì‰Šú‰»
-            databaseManager = new DatabaseManager(ConfigurationManager.ConnectionStrings["sqlsvr"].ConnectionString, tableNames);
-            comboBox_tableName.SelectedIndex = 0;
-
-            // ‰Šú‰»ƒƒ\ƒbƒh‚ÌŒÄ‚Ño‚µ
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            // SQLƒNƒGƒŠ‚ÌŠî–{\‘¢‚ğ\’z
-            BuildBaseQuery();
-            // FROM‹å‚Ì‰Šúİ’è
-            sql.AppendLine("FROM");
-            sql.AppendLine(tableNames[0] + " as b");
-
-            // ƒf[ƒ^‚Ì•\¦
-            DisplayData();
-
-            // "No" —ñ‚ğ“Ç‚İæ‚èê—p‚Éİ’è
-            dataGridView1.Columns["No"].ReadOnly = true;
-        }
-
-        private void BuildBaseQuery()
-        {
-            // SELECT‹å‚ÌŠî–{\‘¢‚ğ\’z
-            sql.Clear();
-            sql.AppendLine("SELECT");
-            sql.AppendLine("ROW_NUMBER() OVER(ORDER BY b.id ASC) No");
-            sql.AppendLine(", b.id");
-            sql.AppendLine(", b.book_name");
-            sql.AppendLine(", price");
-        }
-
-        private void ComboBox_tableName_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            // SQLƒNƒGƒŠ‚ğÄ\’z‚µ‚Äƒf[ƒ^‚ğ•\¦
-            RebuildQueryAndDisplayData();
-        }
-
-        private void RebuildQueryAndDisplayData()
-        {
-            sql.Clear();
-            string? selectedTable = comboBox_tableName.SelectedItem?.ToString();
-            if (string.IsNullOrEmpty(selectedTable))
-            {
-                // –³Œø‚È‘I‘ğ‚ğˆ—
-                return;
-            }
-
-            switch (selectedTable)
-            {
-                case "basic":
-                    // Šî–{ƒe[ƒuƒ‹‚ÌƒNƒGƒŠ\’z
-                    BuildBaseQuery();
-                    sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + " as b");
-                    break;
-                case "basic + rental":
-                    // Šî–{‚ÆƒŒƒ“ƒ^ƒ‹î•ñ‚ğŒ‹‡‚µ‚½ƒNƒGƒŠ\’z
-                    BuildBaseQuery();
-                    sql.AppendLine(", r.name");
-                    sql.AppendLine(", r.loan_date");
-                    sql.AppendLine("FROM");
-                    sql.AppendLine(tableNames[0] + " as b");
-                    sql.AppendLine("LEFT JOIN");
-                    sql.AppendLine(tableNames[1] + " as r ON b.id = r.id");
-                    break;
-                default:
-                    throw new ArgumentException("Unsupported selectedTable");
-            }
-            // ƒf[ƒ^‚ÌÄ•\¦
-            DisplayData();
-        }
-
-        private void Button_Reload_Click(object sender, EventArgs e)
-        {
-            // ƒf[ƒ^‚ÌÄ•\¦
-            DisplayData();
-        }
-
-        private void DisplayData()
-        {
-            try
-            {
-                // ƒf[ƒ^ƒx[ƒX‚©‚çƒf[ƒ^‚ğæ“¾‚µ‚Ä•\¦
-                DataTable dataTable = databaseManager.SelectFromTable(sql.ToString());
-                dataGridView1.DataSource = dataTable;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("ƒf[ƒ^‚Ì•\¦’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: " + ex.Message);
-            }
-        }
-
-        private void Button_Save_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // •ÏX‚ğƒf[ƒ^ƒx[ƒX‚É•Û‘¶
-                SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("ƒf[ƒ^ƒx[ƒX‚Ö‚Ì•Û‘¶’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: " + ex.Message);
-            }
-        }
-
-        private void SaveChanges()
-        {
-            try
-            {
-                // •ÏX‚³‚ê‚½ƒf[ƒ^‚ğæ“¾
-                var modifiedData = ((DataTable)dataGridView1.DataSource).GetChanges();
-
-                if (modifiedData == null)
-                {
-                    MessageBox.Show("•ÏX‚ª‚ ‚è‚Ü‚¹‚ñB");
-                    return;
-                }
-
-                // •ÏXƒf[ƒ^‚Ìˆ—
-                ProcessModifiedData(modifiedData);
-                ((DataTable)dataGridView1.DataSource).AcceptChanges();
-                MessageBox.Show("•ÏX‚ªƒf[ƒ^ƒx[ƒX‚É•Û‘¶‚³‚ê‚Ü‚µ‚½B");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("ƒf[ƒ^ƒx[ƒX‚Ö‚Ì•Û‘¶’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½: " + ex.Message);
-            }
-        }
-
-        private void ProcessModifiedData(DataTable modifiedData)
-        {
-            // Šes‚Ìˆ—
-            foreach (DataRow row in modifiedData.Rows)
-            {
-                databaseManager.ManageRow(row);
-            }
-        }
-    }
     public class DatabaseManager
     {
         public readonly string ConnectionString;
@@ -200,8 +51,6 @@ namespace book_manager
                     throw new ArgumentException("Unsupported DataRowState");
             }
         }
-
-
 
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
@@ -273,14 +122,6 @@ namespace book_manager
             }
         }
 
-
-
-
-
-
-
-
-
         private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
@@ -291,12 +132,12 @@ namespace book_manager
 
                 if (IsRentalInfoEmpty(row))
                 {
-                    // ƒŒƒ“ƒ^ƒ‹î•ñ‚ª‹ó‚Ìê‡A‘}“ü
+                    // ãƒ¬ãƒ³ã‚¿ãƒ«æƒ…å ±ãŒç©ºã®å ´åˆã€æŒ¿å…¥
                     ConfigureInsertCommand(cmd, row);
                 }
                 else if (row["name"] == DBNull.Value)
                 {
-                    // ƒŒƒ“ƒ^ƒ‹î•ñ‚ªíœ‚³‚ê‚½ê‡Aíœ
+                    // ãƒ¬ãƒ³ã‚¿ãƒ«æƒ…å ±ãŒå‰Šé™¤ã•ã‚ŒãŸå ´åˆã€å‰Šé™¤
                     cmd.CommandText = $"DELETE FROM {tableNames[1]} WHERE id = @ParamID";
                     cmd.ExecuteNonQuery();
                 }
@@ -355,13 +196,14 @@ namespace book_manager
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
-            // ƒŒƒ“ƒ^ƒ‹î•ñ‚Ìíœ
+            // ãƒ¬ãƒ³ã‚¿ãƒ«æƒ…å ±ã®å‰Šé™¤
             cmd.CommandText = $"DELETE FROM {tableNames[1]} WHERE id = @ParamID";
             cmd.ExecuteNonQuery();
 
-            // Šî–{î•ñ‚Ìíœ
+            // åŸºæœ¬æƒ…å ±ã®å‰Šé™¤
             cmd.CommandText = $"DELETE FROM {tableNames[0]} WHERE id = @ParamID";
             cmd.ExecuteNonQuery();
         }
     }
 }
+

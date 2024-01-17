@@ -1,6 +1,6 @@
 ﻿namespace book_manager
 {
-    partial class Form_BookManager
+    partial class Form_BookManager_Prototype
     {
         /// <summary>
         ///  Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form_BookManager));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form_BookManager_Prototype));
             dataGridView1 = new DataGridView();
             Label_BookManagement = new Label();
             Button_Save = new Button();
