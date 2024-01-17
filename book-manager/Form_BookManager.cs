@@ -202,58 +202,86 @@ namespace book_manager
         }
 
 
+
         private void ConfigureInsertCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.Clear();
             string[] columns;
             string[] values;
 
+            // basic only
             if (row.ItemArray.Length == 4)
             {
-                ConfigureInsertCommandForTable(cmd, row, tableNames[0]);
-            }
-            else
-            {
-                ConfigureInsertCommandForTable(cmd, row, tableNames[0]);
+                columns = new string[row.ItemArray.Length - 1];
+                values = new string[row.ItemArray.Length - 1];
 
-                // レンタル情報が存在するかどうかのチェック
-                if (row["name"] == DBNull.Value)
-                {
-                    return;
-                }
-
-                ConfigureInsertCommandForTable(cmd, row, tableNames[1]);
-            }
-        }
-
-        private void ConfigureInsertCommandForTable(SqlCommand cmd, DataRow row, string tableName)
-        {
-            string[] columns;
-            string[] values;
-
-            columns = new string[row.ItemArray.Length - 3];
-            values = new string[row.ItemArray.Length - 3];
-
-            if (row.RowState == DataRowState.Added)
-            {
-                for (int i = 0; i < row.ItemArray.Length - 3; i++)
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
                 {
                     columns[i] = row.Table.Columns[i + 1].ColumnName;
                     values[i] = $"@Param{i}";
                     cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
                 }
-
-                string columnsString = string.Join(", ", columns);
-                string valuesString = string.Join(", ", values);
-
-                cmd.CommandText = $"INSERT INTO {tableName} ({columnsString}) VALUES ({valuesString})";
+                cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
                 cmd.ExecuteNonQuery();
             }
+            // basic + rental
+            else
+            {
+                columns = new string[row.ItemArray.Length - 3];
+                values = new string[row.ItemArray.Length - 3];
+
+                // basic
+                if (row.RowState == DataRowState.Added)
+                {
+                    for (int i = 0; i < row.ItemArray.Length - 3; i++)
+                    {
+                        columns[i] = row.Table.Columns[i + 1].ColumnName;
+                        values[i] = $"@Param{i}";
+                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                    }
+                    cmd.CommandText = $"INSERT INTO {tableNames[0]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+                    cmd.ExecuteNonQuery();
+                }
+
+                // rental data exist check
+                    if (row["name"] == DBNull.Value)
+                    {
+                        return;
+                    }
+
+                // rental
+                cmd.Parameters.Clear();
+                columns = new string[row.ItemArray.Length - 3];
+                values = new string[row.ItemArray.Length - 3];
+
+                for (int i = 0; i < row.ItemArray.Length - 1; i++)
+                {
+                    if (i == 0)
+                    {
+                        columns[i] = row.Table.Columns[i + 1].ColumnName;
+                        values[i] = $"@Param{i}";
+                        cmd.Parameters.AddWithValue($"@Param{i}", row[i + 1]);
+                    }
+                    else if (i >= 3)
+                {
+                    columns[i - 2] = row.Table.Columns[i + 1].ColumnName;
+                    values[i - 2] = $"@Param{i - 2}";
+                    cmd.Parameters.AddWithValue($"@Param{i - 2}", row[i + 1]);
+                }
+            }
+            cmd.CommandText = $"INSERT INTO {tableNames[1]} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
+            cmd.ExecuteNonQuery();
         }
+    }
 
 
 
-        private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
+
+
+
+
+
+    private void ConfigureUpdateCommand(SqlCommand cmd, DataRow row)
         {
             cmd.Parameters.AddWithValue("@ParamID", row["id", DataRowVersion.Original]);
 
