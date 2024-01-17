@@ -74,7 +74,7 @@
             comboBox_tableName.Name = "comboBox_tableName";
             comboBox_tableName.SelectedIndexChanged += ComboBox_tableName_SelectedIndexChanged;
             // 
-            // Form_BookManager
+            // Form_BookManager_Prototype
             // 
             resources.ApplyResources(this, "$this");
             AutoScaleMode = AutoScaleMode.Font;
@@ -83,7 +83,7 @@
             Controls.Add(Button_Save);
             Controls.Add(Label_BookManagement);
             Controls.Add(dataGridView1);
-            Name = "Form_BookManager";
+            Name = "Form_BookManager_Prototype";
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
